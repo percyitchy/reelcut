@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reelcut</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Reelcut is a free, open-source video editor that runs in your browser. Multi-track timeline, on-device auto captions, 9:16 presets, no watermark.">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+<link rel="apple-touch-icon" href="/icons/apple-icon-180x180.png">
+<link rel="manifest" href="/manifest.json">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Reelcut: edit TikToks, Reels and Shorts in your browser">
+<meta property="og:description" content="A free, open-source video editor with auto captions, 9:16 presets and no watermark. Your footage stays on your device.">
+<meta property="og:image" content="/open-graph/default.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:creator" content="@zodchiii">
+<meta name="twitter:image" content="/open-graph/default.jpg">
+<link rel="preload" href="/fonts/reelcut/BricolageGrotesque-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/reelcut/Geist-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+@font-face { font-family: "Bricolage Grotesque"; src: url("/fonts/reelcut/BricolageGrotesque-Variable.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: "Geist"; src: url("/fonts/reelcut/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "Geist Mono"; src: url("/fonts/reelcut/GeistMono-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+</style>
+<style>
+/* Layout: light glass over a slow mist. Centered product hero, then a bento of live cards,
+   a spec sheet of big numbers, and a glass CTA. Single light look by design. */
+:root {
+  --bg: #F3F5FA;
+  --ink: #0B0E14;
+  --ink-2: #3B4252;
+  --muted: #6A7386;
+  --line: rgba(15, 23, 42, .08);
+  --glass: rgba(255, 255, 255, .64);
+  --glass-strong: rgba(255, 255, 255, .82);
+  --glass-edge: rgba(255, 255, 255, .9);
+  --accent: #2B4DFF;
+  --accent-2: #6F5BFF;
+  --accent-soft: rgba(43, 77, 255, .1);
+  --ok: #0C9C76;
+  --err: #D23A3A;
+  --clip-video: #14B394;
+  --clip-audio: #F09A2E;
+  --clip-text: #EC4C86;
+  --playhead: #FF4D4D;
+  --ed-bg: #0E1117; --ed-panel: #161B24; --ed-line: #242B37; --ed-text: #E7EBF1; --ed-dim: #7F899A;
+  --shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 24px 60px -28px rgba(24, 34, 88, .28), 0 2px 8px rgba(24, 34, 88, .05);
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "Geist", "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; background: var(--bg); }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.6 var(--body); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: inherit; }
+h1, h2, h3 { font-family: var(--display); margin: 0; letter-spacing: -0.025em; text-wrap: balance; }
+p { margin: 0; }
+ul { list-style: none; margin: 0; padding: 0; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* mist background: WebGL at 0.4x, scaled up by CSS. Nothing with backdrop-filter sits on it. */
+#mist { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; display: block; }
+.grain { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .35; background-image: radial-gradient(rgba(15,23,42,.06) .6px, transparent .7px); background-size: 3px 3px; }
+
+/* glass */
+.glass { background: var(--glass); border: 1px solid var(--glass-edge); box-shadow: var(--shadow); }
+
+/* signature capsule button: glossy pill with a thin highlight running around its rim */
+@property --ang { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.capsule { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0 24px; border: 0; border-radius: 999px; cursor: pointer; text-decoration: none; white-space: nowrap;
+  font: 600 15px/1 var(--body); color: #fff; background: linear-gradient(180deg, #4A66FF 0%, #2B4DFF 55%, #2340E6 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 6px rgba(10,20,90,.25), 0 12px 28px -10px rgba(43,77,255,.65), 0 2px 4px rgba(43,77,255,.2);
+  transition: transform .18s ease, box-shadow .18s ease; }
+.capsule::before { content: ""; position: absolute; inset: -1.5px; border-radius: inherit; padding: 1.5px; z-index: -1;
+  background: conic-gradient(from var(--ang), transparent 0 62%, rgba(255,255,255,0) 66%, rgba(255,255,255,.95) 74%, rgba(190,205,255,.9) 78%, transparent 86%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: rim 3.6s linear infinite; }
+.capsule::after { content: ""; position: absolute; left: 10%; right: 10%; top: 2px; height: 45%; border-radius: 999px; background: linear-gradient(180deg, rgba(255,255,255,.38), rgba(255,255,255,0)); pointer-events: none; }
+.capsule:hover { transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 6px rgba(10,20,90,.25), 0 16px 34px -10px rgba(43,77,255,.75), 0 2px 4px rgba(43,77,255,.2); }
+.capsule:active { transform: translateY(0); }
+.capsule.sm { height: 40px; padding: 0 18px; font-size: 14px; }
+.capsule[disabled] { opacity: .75; cursor: progress; }
+@keyframes rim { to { --ang: 360deg; } }
+
+/* nav */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.navbar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); z-index: 9; margin-top: 12px; }
+.navbar .bar { display: flex; align-items: center; gap: 24px; height: 60px; padding: 0 8px 0 18px; border-radius: 999px; background: var(--glass-strong); border: 1px solid var(--glass-edge); box-shadow: var(--shadow); }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font: 700 19px/1 var(--display); letter-spacing: -0.03em; }
+.navbar nav { display: flex; gap: 22px; margin-left: auto; }
+.navbar nav a { text-decoration: none; color: var(--ink-2); font-size: 14.5px; font-weight: 500; }
+.navbar nav a:hover { color: var(--ink); }
+
+/* hero */
+.hero { padding-block: 72px 40px; text-align: center; }
+.pill { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border-radius: 999px; font: 500 13px/1 var(--body); color: var(--ink-2); text-decoration: none; }
+.pill b { font: 500 11.5px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: #fff; background: var(--ink); padding: 6px 9px; border-radius: 999px; }
+.hero h1 { margin: 26px auto 0; max-width: 15ch; font-size: clamp(44px, 7.4vw, 92px); line-height: .96; font-weight: 720; letter-spacing: -0.04em; }
+.hero h1 .grad { background: linear-gradient(100deg, #2B4DFF 10%, #7A5CFF 50%, #EC4C86 90%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero .lede { margin: 22px auto 0; max-width: 36em; font-size: 19px; line-height: 1.55; color: var(--ink-2); }
+.access { margin: 34px auto 0; max-width: 520px; text-align: left; }
+.form { display: flex; gap: 6px; padding: 6px; border-radius: 999px; background: var(--glass-strong); border: 1px solid var(--glass-edge); box-shadow: var(--shadow); transition: box-shadow .2s; }
+.form:focus-within { box-shadow: 0 0 0 4px var(--accent-soft), var(--shadow); }
+.form input[type=email] { flex: 1; min-width: 0; height: 48px; border: 0; background: transparent; color: var(--ink); font: 400 16px var(--body); padding: 0 18px; outline: none; }
+.form input::placeholder { color: var(--muted); }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.msg { margin: 10px 18px 0; font-size: 14px; min-height: 1.4em; color: var(--muted); }
+.msg.err { color: var(--err); }
+.ticks { margin-top: 6px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; font-size: 13.5px; color: var(--muted); }
+.ticks span { display: inline-flex; align-items: center; gap: 6px; }
+.ticks svg { color: var(--ok); }
+.unlocked { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding: 10px 10px 10px 22px; border-radius: 999px; background: var(--glass-strong); border: 1px solid var(--glass-edge); box-shadow: 0 0 0 4px rgba(12,156,118,.12), var(--shadow); }
+.unlocked .who { flex: 1; min-width: 180px; line-height: 1.3; }
+.unlocked strong { display: block; font: 650 16px/1.3 var(--display); }
+.unlocked small { color: var(--muted); font-size: 13px; word-break: break-all; }
+
+/* product shot */
+.shot { position: relative; margin: 56px auto 0; max-width: 1060px; }
+.shot .frame-glass { padding: 10px; border-radius: 28px; }
+.float { position: absolute; background: rgba(255,255,255,.95) !important; display: inline-flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 16px; font: 500 13px/1.25 var(--body); color: var(--ink); text-align: left; animation: bob 7s ease-in-out infinite; z-index: 2; }
+.float small { display: block; font: 500 11px var(--mono); color: var(--muted); letter-spacing: .02em; }
+.float .ico { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none; }
+.float.f1 { left: -64px; top: 34%; }
+.float.f2 { right: -56px; top: -22px; animation-delay: -3s; }
+.float.f3 { right: 6%; bottom: -26px; animation-delay: -5s; }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+.ed { position: relative; border-radius: 20px; background: var(--ed-bg); color: var(--ed-text); overflow: hidden; font: 12px/1.3 var(--body); text-align: left; }
+.ed-top { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; border-bottom: 1px solid var(--ed-line); }
+.ed-top .lights { display: flex; gap: 6px; } .ed-top .lights i { width: 11px; height: 11px; border-radius: 50%; background: #FF5F57; } .ed-top .lights i:nth-child(2) { background: #FEBC2E; } .ed-top .lights i:nth-child(3) { background: #28C840; }
+.ed-top .file { margin-left: 8px; font: 500 12px var(--mono); color: var(--ed-dim); }
+.ed-top .file b { color: var(--ed-text); font-weight: 500; }
+.ed-top .exp { margin-left: auto; height: 28px; padding: 0 12px; border-radius: 999px; background: var(--accent); color: #fff; display: inline-flex; align-items: center; font: 600 12px var(--body); }
+.ed-mid { display: grid; grid-template-columns: 150px minmax(0, 1fr) 190px; height: 360px; border-bottom: 1px solid var(--ed-line); }
+.bin { border-right: 1px solid var(--ed-line); padding: 12px; display: flex; flex-direction: column; gap: 9px; }
+.lbl { font: 500 10px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ed-dim); }
+.thumb { aspect-ratio: 16 / 10; border-radius: 7px; position: relative; overflow: hidden; }
+.thumb::after { content: attr(data-d); position: absolute; right: 4px; bottom: 3px; font: 500 9px var(--mono); color: #fff; background: rgba(0,0,0,.45); padding: 1px 4px; border-radius: 3px; }
+.t1 { background: linear-gradient(160deg, #FFB36B, #E0597A 55%, #5B3B8C); }
+.t2 { background: linear-gradient(170deg, #9FD8FF, #3D8BD9 60%, #1C3D6B); }
+.t3 { background: linear-gradient(160deg, #C9F2C1, #4DB389 55%, #1F5B53); }
+.stage { display: grid; place-items: center; background: radial-gradient(60% 70% at 50% 45%, #1A2030, #0E1117); }
+.vframe { height: 324px; aspect-ratio: 9 / 16; max-width: 100%; border-radius: 10px; position: relative; overflow: hidden; background: linear-gradient(180deg, #2A2F6B 0%, #C2507A 52%, #FFB06A 78%, #3A2541 78.5%, #1C1426 100%); box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 20px 40px rgba(0,0,0,.4); }
+.vframe .sun { position: absolute; left: 50%; top: 58%; width: 64px; height: 64px; margin-left: -32px; border-radius: 50%; background: radial-gradient(circle, #FFE3A3, #FFB36B 60%, transparent 62%); }
+.vframe .hills { position: absolute; inset: auto 0 0 0; height: 30%; background: radial-gradient(120% 90% at 20% 100%, #2B1E38 60%, transparent 61%), radial-gradient(120% 80% at 85% 100%, #24192F 58%, transparent 59%); }
+.vframe .safe { position: absolute; inset: 9% 7%; border: 1px dashed rgba(255,255,255,.18); border-radius: 4px; }
+.cap { position: absolute; left: 7%; right: 7%; bottom: 17%; text-align: center; font: 800 17px/1.15 var(--display); color: #fff; text-transform: uppercase; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.cap span { display: inline-block; padding: 0 3px; border-radius: 4px; }
+.cap span.on { background: #FFE14D; color: #14110A; text-shadow: none; }
+.props { border-left: 1px solid var(--ed-line); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; justify-content: space-between; gap: 6px; padding: 8px 9px; border-radius: 8px; background: var(--ed-panel); border: 1px solid var(--ed-line); }
+.row span { color: var(--ed-dim); } .row b { font-weight: 500; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { padding: 4px 8px; border-radius: 6px; background: var(--ed-panel); border: 1px solid var(--ed-line); font-size: 11px; }
+.chip.sel { border-color: #FFE14D; color: #FFE14D; }
+.ed-tl { padding: 10px 12px 14px; }
+.tl-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.tc { font: 500 12.5px var(--mono); font-variant-numeric: tabular-nums; }
+.tc small { color: var(--ed-dim); }
+.ruler { position: relative; height: 16px; margin-left: 32px; border-bottom: 1px solid var(--ed-line); background: repeating-linear-gradient(90deg, var(--ed-line) 0 1px, transparent 1px 10%) 0 100% / 100% 6px no-repeat; }
+.ruler span { position: absolute; top: 0; font: 9.5px var(--mono); color: var(--ed-dim); transform: translateX(3px); }
+.tracks { position: relative; display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.track { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 6px; align-items: center; }
+.track .ic { font: 500 9.5px var(--mono); color: var(--ed-dim); text-align: center; }
+.lane { position: relative; height: 28px; border-radius: 6px; background: #10141B; }
+.clip { position: absolute; top: 0; bottom: 0; border-radius: 6px; overflow: hidden; font: 500 10.5px/28px var(--body); padding: 0 7px; white-space: nowrap; text-overflow: ellipsis; color: #fff; }
+.clip.v { background: color-mix(in srgb, var(--clip-video) 82%, #000); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); background-image: linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px); background-size: 28px 100%; }
+.clip.t { background: color-mix(in srgb, var(--clip-text) 80%, #000); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+.clip.a { background: color-mix(in srgb, var(--clip-audio) 28%, #10141B); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--clip-audio) 70%, transparent); padding: 0; }
+.wave { position: absolute; inset: 3px 2px; display: flex; align-items: center; gap: 1px; }
+.wave i { flex: 1; background: var(--clip-audio); border-radius: 1px; }
+.ph { position: absolute; top: -28px; bottom: 0; width: 2px; background: var(--playhead); left: 32px; pointer-events: none; }
+.ph::before { content: ""; position: absolute; top: 0; left: -5px; width: 12px; height: 12px; background: var(--playhead); clip-path: polygon(0 0, 100% 0, 100% 55%, 50% 100%, 0 55%); }
+
+/* trust strip */
+.strip { padding-block: 56px 8px; }
+.strip .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 14px; text-align: center; color: var(--ink-2); font-size: 15px; }
+.gh { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; font: 500 13px var(--mono); text-decoration: none; }
+
+/* section heads */
+section { padding-block: 88px; }
+.head { max-width: 700px; display: flex; flex-direction: column; gap: 14px; margin-bottom: 44px; }
+.head.center { margin-left: auto; margin-right: auto; text-align: center; align-items: center; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.head h2 { font-size: clamp(34px, 4.6vw, 56px); line-height: 1.02; font-weight: 700; letter-spacing: -0.035em; }
+.head p { color: var(--ink-2); font-size: 18px; max-width: 36em; }
+
+/* bento of live cards */
+.bento { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.card { position: relative; overflow: hidden; border-radius: 26px; padding: 26px; min-height: 300px; display: flex; flex-direction: column; gap: 8px; isolation: isolate; border: 1px solid var(--glass-edge); box-shadow: var(--shadow); min-width: 0; }
+.card.wide { grid-column: span 2; }
+.card::before { content: ""; position: absolute; width: 70%; aspect-ratio: 1; border-radius: 50%; z-index: -1; filter: blur(40px); opacity: .75; background: var(--glow); top: -30%; right: -20%; animation: drift 14s ease-in-out infinite alternate; }
+@keyframes drift { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-18%, 22%) scale(1.15); } 100% { transform: translate(-36%, 6%) scale(.95); } }
+.card h3 { font-size: 23px; font-weight: 680; line-height: 1.15; letter-spacing: -0.02em; }
+.card p { color: var(--ink-2); font-size: 15px; max-width: 34em; }
+.card .meta { font: 500 12px var(--mono); color: var(--muted); letter-spacing: .02em; }
+.card .viz { margin-top: auto; padding-top: 18px; }
+.duo { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,.7); border: 1px solid var(--glass-edge); box-shadow: 0 6px 16px -8px rgba(24,34,88,.25); margin-bottom: 8px; }
+.c-cap { background: linear-gradient(140deg, #FFF1F6 0%, #F3EEFF 55%, #EAF0FF 100%); --glow: radial-gradient(circle, #FFB4CF, transparent 70%); }
+.c-ver { background: linear-gradient(160deg, #EEF3FF, #F7F9FF); --glow: radial-gradient(circle, #B9C8FF, transparent 70%); }
+.c-tl  { background: linear-gradient(160deg, #EAFBF5, #F6FDFB); --glow: radial-gradient(circle, #9BEBD3, transparent 70%); }
+.c-priv{ background: linear-gradient(160deg, #F1F0FF, #FAFAFF); --glow: radial-gradient(circle, #CBC2FF, transparent 70%); }
+.c-snd { background: linear-gradient(160deg, #FFF6EA, #FFFBF5); --glow: radial-gradient(circle, #FFD49A, transparent 70%); }
+.c-exp { background: linear-gradient(140deg, #EDF2FF 0%, #F4EFFF 60%, #FFF0F5 100%); --glow: radial-gradient(circle, #A9BCFF, transparent 70%); }
+.c-fx  { background: linear-gradient(160deg, #F2F5F9, #FBFCFE); --glow: radial-gradient(circle, #C9D3E3, transparent 70%); }
+
+/* captions card viz */
+.capdemo { border-radius: 18px; background: linear-gradient(180deg, #1D2050, #8B3C6E 60%, #E7955E); padding: 34px 18px; text-align: center; font: 800 clamp(20px, 2.4vw, 28px)/1.2 var(--display); color: #fff; text-transform: uppercase; box-shadow: 0 18px 40px -20px rgba(60,20,80,.6); position: relative; overflow: hidden; }
+.capdemo span { display: inline-block; padding: 0 5px; border-radius: 6px; transition: background .1s; }
+.capdemo span.on { background: #FFE14D; color: #14110A; }
+.langs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.langs span { font: 500 11.5px var(--mono); padding: 4px 9px; border-radius: 999px; background: rgba(255,255,255,.75); border: 1px solid var(--glass-edge); color: var(--ink-2); }
+
+/* aspect morph + liquid slider */
+.aspect { display: grid; place-items: center; height: 150px; }
+.aspect .box { width: 70px; height: 124px; border-radius: 12px; background: linear-gradient(180deg, #5B76FF, #2B4DFF); box-shadow: 0 14px 30px -14px rgba(43,77,255,.7), inset 0 1px 0 rgba(255,255,255,.4); display: grid; place-items: center; color: #fff; font: 600 13px var(--mono); transition: width .9s cubic-bezier(.6,0,.2,1), height .9s cubic-bezier(.6,0,.2,1); }
+.slider { position: relative; height: 34px; margin-top: 12px; border-radius: 999px; background: rgba(255,255,255,.8); border: 1px solid var(--glass-edge); box-shadow: inset 0 1px 3px rgba(24,34,88,.08); display: grid; grid-template-columns: repeat(4, 1fr); font: 500 11.5px var(--mono); color: var(--muted); text-align: center; align-items: center; }
+.slider .blob { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(25% - 6px); border-radius: 999px; background: linear-gradient(180deg, #fff, #EEF2FF); box-shadow: 0 4px 12px -4px rgba(43,77,255,.45), inset 0 0 0 1px rgba(43,77,255,.2); transition: left .9s cubic-bezier(.6,0,.2,1), transform .9s; }
+.slider span { position: relative; z-index: 1; transition: color .3s; }
+.slider span.on { color: var(--accent); }
+
+/* mini timeline */
+.mini { position: relative; border-radius: 16px; background: rgba(255,255,255,.72); border: 1px solid var(--glass-edge); padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.mini .lane { height: 20px; background: rgba(15,23,42,.04); }
+.mini .clip { line-height: 20px; font-size: 9.5px; padding: 0 6px; border-radius: 5px; }
+.mini .ph2 { position: absolute; top: 6px; bottom: 6px; width: 2px; background: var(--playhead); border-radius: 2px; left: 12px; animation: sweep 6s linear infinite; }
+@keyframes sweep { from { left: 12px; } to { left: calc(100% - 14px); } }
+
+/* privacy particles */
+.device { position: relative; height: 150px; border-radius: 18px; background: rgba(255,255,255,.7); border: 1px solid var(--glass-edge); overflow: hidden; }
+.device canvas { width: 100%; height: 100%; display: block; }
+.device .zero { position: absolute; left: 14px; bottom: 10px; font: 700 34px/1 var(--display); letter-spacing: -0.03em; }
+.device .zero small { font: 500 11px var(--mono); color: var(--muted); letter-spacing: .04em; display: block; margin-top: 4px; }
+
+/* sound bars */
+.bars { display: flex; align-items: center; gap: 4px; height: 110px; padding: 0 4px; }
+.bars i { flex: 1; border-radius: 4px; background: linear-gradient(180deg, #FFB65C, #F08A1F); height: 20%; animation: eq 1.2s ease-in-out infinite; transform-origin: center; }
+@keyframes eq { 0%, 100% { transform: scaleY(.35); } 50% { transform: scaleY(1); } }
+
+/* export liquid progress */
+.exporter { border-radius: 18px; background: rgba(255,255,255,.75); border: 1px solid var(--glass-edge); padding: 16px 18px; display: grid; gap: 12px; }
+.exporter .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.exporter .name { font: 600 15px var(--body); }
+.exporter .pct { font: 700 30px/1 var(--display); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.track-liquid { position: relative; height: 18px; border-radius: 999px; background: rgba(15,23,42,.06); overflow: hidden; }
+.track-liquid .fill { position: absolute; inset: 0 auto 0 0; width: 0%; border-radius: 999px; background: linear-gradient(90deg, #2B4DFF, #7A5CFF 60%, #EC4C86); }
+.track-liquid .fill::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(255,255,255,.28) 0 10px, transparent 10px 22px); animation: flow 1.1s linear infinite; }
+@keyframes flow { to { background-position: 44px 0; } }
+.exporter .specs { display: flex; flex-wrap: wrap; gap: 6px; }
+.exporter .specs span { font: 500 11.5px var(--mono); padding: 4px 9px; border-radius: 999px; background: rgba(43,77,255,.08); color: var(--accent); }
+
+/* fx: blur mask moving over a frame */
+.fxdemo { position: relative; height: 150px; border-radius: 18px; overflow: hidden; background: linear-gradient(160deg, #9FD8FF, #3D8BD9 60%, #1C3D6B); }
+.fxdemo .face { position: absolute; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #FFE0C2, #E8A982); top: 40px; left: 40%; animation: walk 6s ease-in-out infinite; }
+.fxdemo .mask { position: absolute; width: 84px; height: 84px; border-radius: 22px; top: 28px; left: calc(40% - 12px); border: 1.5px dashed rgba(255,255,255,.95); background: rgba(255,255,255,.18); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); animation: walk 6s ease-in-out infinite; }
+.fxdemo .spd { position: absolute; right: 10px; bottom: 10px; font: 600 12px var(--mono); color: #fff; background: rgba(0,0,0,.35); padding: 4px 8px; border-radius: 999px; }
+@keyframes walk { 0%, 100% { transform: translateX(-60px); } 50% { transform: translateX(60px); } }
+
+/* spec sheet of big numbers */
+.specsheet { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-radius: 28px; overflow: hidden; }
+.spec { padding: 34px 28px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid var(--line); min-width: 0; }
+.spec:last-child { border-right: 0; }
+.spec .num { font: 650 clamp(44px, 5.4vw, 72px)/0.95 var(--display); letter-spacing: -0.045em; font-variant-numeric: tabular-nums; }
+.spec .num sup { font-size: .4em; letter-spacing: 0; vertical-align: .9em; margin-left: 2px; color: var(--muted); }
+.spec p { color: var(--ink-2); font-size: 15px; }
+.spec .k { font: 500 11.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* steps */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.step { border-radius: 24px; padding: 26px; display: flex; flex-direction: column; gap: 10px; }
+.step .n { width: 34px; height: 34px; border-radius: 999px; display: grid; place-items: center; font: 600 14px var(--mono); color: var(--accent); background: var(--accent-soft); }
+.step h3 { font-size: 21px; font-weight: 660; }
+.step p { color: var(--ink-2); font-size: 15.5px; }
+
+/* faq */
+.faq { max-width: 820px; margin: 0 auto; border-radius: 26px; padding: 6px 28px; }
+.faq details { border-bottom: 1px solid var(--line); }
+.faq details:last-child { border-bottom: 0; }
+.faq summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 22px 0; font: 600 17.5px/1.35 var(--body); }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: ""; flex: none; width: 28px; height: 28px; border-radius: 999px; background: var(--accent-soft) center / 12px 12px no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M6 1v10M1 6h10' stroke='%232B4DFF' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E"); transition: transform .25s; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq details p { padding-bottom: 22px; color: var(--ink-2); max-width: 64ch; }
+
+/* cta */
+.cta { padding-block: 40px 96px; }
+.cta-card { position: relative; overflow: hidden; isolation: isolate; border-radius: 34px; padding: 64px 32px; text-align: center; background: linear-gradient(135deg, rgba(255,255,255,.85), rgba(255,255,255,.62)); }
+.cta-card::before, .cta-card::after { content: ""; position: absolute; z-index: -1; width: 46%; aspect-ratio: 1; border-radius: 50%; filter: blur(60px); opacity: .7; animation: drift 16s ease-in-out infinite alternate; }
+.cta-card::before { background: #B8C6FF; left: -12%; top: -40%; }
+.cta-card::after { background: #FFC2D8; right: -12%; bottom: -50%; animation-delay: -6s; }
+.cta-card h2 { font-size: clamp(36px, 5.2vw, 64px); line-height: 1; font-weight: 720; letter-spacing: -0.04em; max-width: 14ch; margin: 0 auto; }
+.cta-card p { color: var(--ink-2); font-size: 18px; margin-top: 14px; }
+
+footer { padding-block: 0 40px; color: var(--muted); font-size: 14px; }
+footer .wrap > div { display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: 28px; }
+footer nav { display: flex; flex-wrap: wrap; gap: 18px; }
+footer a { text-decoration: none; } footer a:hover { color: var(--ink); }
+
+@media (max-width: 1000px) {
+  .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card.wide { grid-column: span 2; }
+  .specsheet { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .spec:nth-child(2) { border-right: 0; }
+  .spec:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .steps { grid-template-columns: minmax(0, 1fr); }
+  .navbar nav { display: none; }
+  .navbar .capsule { margin-left: auto; }
+  .float.f1, .float.f2 { display: none; }
+  .ed-mid { grid-template-columns: 120px minmax(0, 1fr) 160px; }
+}
+@media (max-width: 640px) {
+  .hero { padding-block: 44px 24px; }
+  .hero .lede { font-size: 17px; }
+  .form { flex-direction: column; border-radius: 26px; }
+  .form .capsule { width: 100%; }
+  .unlocked { border-radius: 24px; padding: 16px; }
+  .unlocked .capsule { width: 100%; }
+  .bento { grid-template-columns: minmax(0, 1fr); }
+  .card.wide { grid-column: auto; }
+  .card { min-height: 0; padding: 22px; }
+  .ed-mid { grid-template-columns: minmax(0, 1fr); height: 280px; }
+  .bin, .props { display: none; }
+  .vframe { height: 252px; }
+  .ed-top .file { display: none; }
+  .float.f3 { right: 12px; bottom: -22px; }
+  .specsheet { grid-template-columns: minmax(0, 1fr); }
+  .spec { border-right: 0; border-bottom: 1px solid var(--line); }
+  .spec:last-child { border-bottom: 0; }
+  section { padding-block: 64px; }
+  .faq { padding: 4px 18px; }
+  .cta-card { padding: 44px 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+
+<canvas id="mist" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="navbar">
+  <div class="wrap">
+    <div class="bar">
+      <a class="brand" href="#top" aria-label="Reelcut home">
+        <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4A66FF"/><stop offset="1" stop-color="#7A5CFF"/></linearGradient></defs><rect width="30" height="30" rx="9" fill="url(#lg)"/><rect x="7.5" y="8.5" width="6.5" height="13" rx="2" fill="#fff"/><rect x="16" y="8.5" width="6.5" height="13" rx="2" fill="#fff" opacity=".55"/><rect x="14.4" y="5.5" width="1.2" height="19" rx=".6" fill="#FF4D4D"/></svg>
+        Reelcut
+      </a>
+      <nav aria-label="Main">
+        <a href="#features">Features</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#faq">FAQ</a>
+        <a href="https://github.com/percyitchy/reelcut" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+      <a class="capsule sm" href="#access">Get access</a>
+    </div>
+  </div>
+</div>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <a class="pill glass" href="https://github.com/percyitchy/reelcut" target="_blank" rel="noopener"><b>Open source</b>Free video editor that runs in your browser</a>
+      <h1>Edit TikToks, Reels and Shorts <span class="grad">right in your browser</span></h1>
+      <p class="lede">A full video editor with a multi-track timeline, auto captions and vertical presets. Nothing to install, no watermark on export, and your footage stays on your device.</p>
+
+      <div class="access" id="access">
+        <div data-gate>
+          <form class="form" data-form novalidate>
+            <label class="hp" aria-hidden="true">Company <input type="text" name="company" tabindex="-1" autocomplete="off"></label>
+            <label for="email-hero" class="hp">Email address</label>
+            <input id="email-hero" type="email" name="email" placeholder="Enter your email" autocomplete="email" required>
+            <button class="capsule" type="submit">Get free access</button>
+          </form>
+          <p class="msg" role="status" aria-live="polite"></p>
+        </div>
+        <div class="ticks">
+          <span><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5 5.5 10.5 11.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Free forever</span>
+          <span><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5 5.5 10.5 11.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>No credit card</span>
+          <span><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5 5.5 10.5 11.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>No watermark</span>
+        </div>
+      </div>
+
+      <div class="shot">
+        <div class="float glass f1"><div class="ico" style="background:rgba(236,76,134,.12)"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="2" y="9" width="14" height="6" rx="2" fill="#EC4C86" opacity=".3"/><rect x="4" y="11" width="10" height="2" rx="1" fill="#EC4C86"/><rect x="5" y="4" width="8" height="3" rx="1.5" fill="#EC4C86"/></svg></div><div>Auto captions<small>whisper · on device</small></div></div>
+        <div class="float glass f2"><div class="ico" style="background:rgba(12,156,118,.12)"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="3" y="2.5" width="12" height="13" rx="3" fill="#0C9C76" opacity=".25"/><path d="M6 9.2 8.2 11.3 12.2 6.8" fill="none" stroke="#0C9C76" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div>0 bytes uploaded<small>files stay local</small></div></div>
+        <div class="float glass f3"><div class="ico" style="background:rgba(43,77,255,.12)"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><rect x="5" y="1.5" width="8" height="15" rx="2.5" fill="#2B4DFF" opacity=".25"/><path d="M9 5.5v6M6.5 9 9 11.5 11.5 9" fill="none" stroke="#2B4DFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div>Export 1080×1920<small>mp4 · 60 fps</small></div></div>
+        <div class="frame-glass glass">
+          <div class="ed" role="img" aria-label="The Reelcut editor with a 9:16 video, word-by-word captions and a three-track timeline">
+            <div class="ed-top">
+              <div class="lights"><i></i><i></i><i></i></div>
+              <div class="file">projects / <b>golden-hour-recap</b></div>
+              <div class="exp">Export</div>
+            </div>
+            <div class="ed-mid">
+              <div class="bin">
+                <div class="lbl">Media</div>
+                <div class="thumb t1" data-d="0:08"></div>
+                <div class="thumb t2" data-d="0:05"></div>
+                <div class="thumb t3" data-d="0:11"></div>
+              </div>
+              <div class="stage"><div class="vframe"><div class="sun"></div><div class="hills"></div><div class="safe"></div><div class="cap" id="cap"></div></div></div>
+              <div class="props">
+                <div class="lbl">Captions</div>
+                <div class="row"><span>Model</span><b>Whisper Small</b></div>
+                <div class="row"><span>Language</span><b>English</b></div>
+                <div class="lbl">Style</div>
+                <div class="chips"><span class="chip sel">Highlight</span><span class="chip">Bold</span><span class="chip">Minimal</span><span class="chip">Pop</span></div>
+                <div class="lbl">Canvas</div>
+                <div class="chips"><span class="chip sel">9:16</span><span class="chip">1:1</span><span class="chip">16:9</span><span class="chip">4:3</span></div>
+              </div>
+            </div>
+            <div class="ed-tl">
+              <div class="tl-head"><div class="tc" id="tc">00:00:00<small>:00</small></div><div class="lbl">30 fps</div></div>
+              <div class="ruler" id="ruler"></div>
+              <div class="tracks" id="tracks">
+                <div class="track"><div class="ic">T1</div><div class="lane" id="lane-t"></div></div>
+                <div class="track"><div class="ic">V1</div><div class="lane"><div class="clip v" style="left:0;width:38%">sunset_pier.mp4</div><div class="clip v" style="left:38.6%;width:26%">city_drive.mp4</div><div class="clip v" style="left:65.2%;width:34.8%">rooftop.mp4</div></div></div>
+                <div class="track"><div class="ic">A1</div><div class="lane"><div class="clip a" style="left:0;width:100%"><div class="wave" id="wave"></div></div></div></div>
+                <div class="ph" id="ph"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip">
+    <div class="wrap">
+      <span>Built on OpenCut, the open-source video editor loved by developers</span>
+      <a class="gh glass" href="https://github.com/OpenCut-app/opencut-classic" target="_blank" rel="noopener"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 .2l2.3 4.8 5.2.7-3.8 3.6.9 5.2L8 12l-4.6 2.5.9-5.2L.5 5.7l5.2-.7z"/></svg>96k+ stars · MIT</a>
+    </div>
+  </div>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="head">
+        <div class="eyebrow">Features</div>
+        <h2>Everything a short video needs, in one tab</h2>
+        <p>Cut your clips, caption them and export in the format each platform wants. The whole editor loads in the browser you already use.</p>
+      </div>
+
+      <div class="bento">
+        <article class="card c-cap wide">
+          <div class="duo"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="10" width="16" height="7" rx="2.2" fill="#EC4C86" opacity=".28"/><rect x="4.5" y="12.6" width="11" height="2" rx="1" fill="#EC4C86"/><rect x="5" y="3.5" width="10" height="4" rx="2" fill="#EC4C86"/></svg></div>
+          <h3>Auto captions that run on your device</h3>
+          <p>Whisper turns speech into word-by-word captions inside the browser. Your audio never goes to a server, and you pick a faster or a more accurate model.</p>
+          <div class="viz">
+            <div class="capdemo" id="capdemo"></div>
+            <div class="langs"><span>English</span><span>Spanish</span><span>French</span><span>German</span><span>Italian</span><span>Portuguese</span><span>Russian</span><span>Japanese</span><span>Chinese</span></div>
+          </div>
+        </article>
+
+        <article class="card c-ver">
+          <div class="duo"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="5.5" y="1.5" width="9" height="17" rx="2.6" fill="#2B4DFF" opacity=".25"/><rect x="5.5" y="1.5" width="9" height="17" rx="2.6" fill="none" stroke="#2B4DFF" stroke-width="1.7"/></svg></div>
+          <h3>Vertical first</h3>
+          <p>Start in 9:16 for TikTok, Reels and Shorts, then switch formats when you post elsewhere.</p>
+          <div class="viz">
+            <div class="aspect"><div class="box" id="abox">9:16</div></div>
+            <div class="slider" id="slider"><div class="blob" id="blob"></div><span class="on">9:16</span><span>1:1</span><span>4:3</span><span>16:9</span></div>
+          </div>
+        </article>
+
+        <article class="card c-tl">
+          <div class="duo"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="4" width="8" height="4.5" rx="1.5" fill="#14B394"/><rect x="11" y="4" width="7" height="4.5" rx="1.5" fill="#14B394" opacity=".35"/><rect x="2" y="11.5" width="16" height="4.5" rx="1.5" fill="#14B394" opacity=".35"/></svg></div>
+          <h3>Multi-track timeline</h3>
+          <p>Stack video, audio and text. Ripple editing closes gaps when you delete a clip.</p>
+          <div class="viz">
+            <div class="mini">
+              <div class="lane"><div class="clip t" style="left:4%;width:30%">hook</div><div class="clip t" style="left:38%;width:26%">punchline</div><div class="clip t" style="left:68%;width:28%">cta</div></div>
+              <div class="lane"><div class="clip v" style="left:0;width:44%">a-roll</div><div class="clip v" style="left:45%;width:55%">b-roll</div></div>
+              <div class="lane"><div class="clip a" style="left:0;width:100%;background:rgba(240,154,46,.25)"></div></div>
+              <div class="ph2"></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card c-priv" id="privacy">
+          <div class="duo"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.8 16.5 4.3v5.2c0 4-2.8 6.9-6.5 8.7-3.7-1.8-6.5-4.7-6.5-8.7V4.3z" fill="#7A5CFF" opacity=".25"/><path d="M7 10.2 9.2 12.3 13.3 7.8" fill="none" stroke="#7A5CFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Private by design</h3>
+          <p>Projects live in your browser's own storage. There is nothing to upload and nothing to wait for.</p>
+          <div class="viz">
+            <div class="device"><canvas id="particles"></canvas><div class="zero">0 MB<small>SENT TO ANY SERVER</small></div></div>
+          </div>
+        </article>
+
+        <article class="card c-snd">
+          <div class="duo"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="7" width="3" height="6" rx="1.5" fill="#F09A2E" opacity=".35"/><rect x="6.5" y="3" width="3" height="14" rx="1.5" fill="#F09A2E"/><rect x="11" y="5.5" width="3" height="9" rx="1.5" fill="#F09A2E" opacity=".6"/><rect x="15.5" y="7.5" width="3" height="5" rx="1.5" fill="#F09A2E" opacity=".35"/></svg></div>
+          <h3>Sound library</h3>
+          <p>Search sound effects from Freesound and drop them straight onto the timeline.</p>
+          <div class="viz"><div class="bars" id="bars"></div></div>
+        </article>
+
+        <article class="card c-exp wide">
+          <div class="duo"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="12" width="15" height="5.5" rx="2" fill="#2B4DFF" opacity=".25"/><path d="M10 2.5v9.5M6.2 8.4 10 12.2l3.8-3.8" fill="none" stroke="#2B4DFF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Clean export, no watermark</h3>
+          <p>Export to MP4 or WebM at the frame rate you choose. The video is yours to post anywhere, including for clients.</p>
+          <div class="viz">
+            <div class="exporter">
+              <div class="top"><div class="name">golden-hour-recap.mp4</div><div class="pct" id="pct">0%</div></div>
+              <div class="track-liquid"><div class="fill" id="fill"></div></div>
+              <div class="specs"><span>MP4</span><span>1080 × 1920</span><span>60 fps</span><span>audio on</span></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card c-fx">
+          <div class="duo"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5" fill="#3B4252" opacity=".18"/><circle cx="10" cy="10" r="4" fill="none" stroke="#3B4252" stroke-width="1.7" stroke-dasharray="2.4 2.2"/></svg></div>
+          <h3>Speed, masks and blur</h3>
+          <p>Change clip speed, mask part of the frame and blur faces or plates.</p>
+          <div class="viz"><div class="fxdemo"><div class="face"></div><div class="mask"></div><div class="spd">0.5×</div></div></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="head center">
+        <div class="eyebrow">By the numbers</div>
+        <h2>Studio features, zero cost</h2>
+      </div>
+      <div class="specsheet glass">
+        <div class="spec"><div class="k">Price</div><div class="num">$0</div><p>Free for personal and commercial use.</p></div>
+        <div class="spec"><div class="k">Uploads</div><div class="num">0<sup>MB</sup></div><p>Footage is edited and stored locally.</p></div>
+        <div class="spec"><div class="k">Frame rate</div><div class="num">120<sup>fps</sup></div><p>Export from 24 up to 120 fps.</p></div>
+        <div class="spec"><div class="k">Captions</div><div class="num">9</div><p>Languages for on-device auto captions.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="head">
+        <div class="eyebrow">Get started</div>
+        <h2>From email to first cut in under a minute</h2>
+      </div>
+      <div class="steps">
+        <div class="step glass"><div class="n">1</div><h3>Enter your email</h3><p>Type your email to unlock the editor. Access is free and stays open on this device.</p></div>
+        <div class="step glass"><div class="n">2</div><h3>Open the editor</h3><p>Create a project and pick 9:16 for TikTok, Reels and Shorts, or any other canvas.</p></div>
+        <div class="step glass"><div class="n">3</div><h3>Drop in your footage</h3><p>Cut, caption and export. Your files load from your computer and stay there.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" style="padding-top:0">
+    <div class="wrap">
+      <div class="head center"><div class="eyebrow">FAQ</div><h2>Questions creators ask first</h2></div>
+      <div class="faq glass">
+        <details open><summary>Is Reelcut really free?</summary><p>Yes. The editor is free with no watermark and no export limits. It is open source under the MIT license, so the code will stay public.</p></details>
+        <details><summary>Why do you ask for my email?</summary><p>Your email unlocks the editor and lets us tell you when new features ship. We don't sell it, and you can ask us to delete it at any time.</p></details>
+        <details><summary>Do my videos get uploaded anywhere?</summary><p>No. Footage is loaded from your computer and kept in your browser's storage. Captions are generated on your device as well.</p></details>
+        <details><summary>Which browser should I use?</summary><p>A recent version of Chrome, Edge, Arc or Brave works best. The largest caption model runs best with WebGPU, which these browsers support.</p></details>
+        <details><summary>How is this related to OpenCut?</summary><p>Reelcut is a redesigned fork of OpenCut, an open-source video editor released under the MIT license. Credit for the editor engine goes to the OpenCut team.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <div class="cta">
+    <div class="wrap">
+      <div class="cta-card glass">
+        <h2>Your next video starts in this tab</h2>
+        <p>Free access, no install, no watermark.</p>
+        <div class="access">
+          <div data-gate>
+            <form class="form" data-form novalidate>
+              <label class="hp" aria-hidden="true">Company <input type="text" name="company" tabindex="-1" autocomplete="off"></label>
+              <label for="email-cta" class="hp">Email address</label>
+              <input id="email-cta" type="email" name="email" placeholder="Enter your email" autocomplete="email" required>
+              <button class="capsule" type="submit">Get free access</button>
+            </form>
+            <p class="msg" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap"><div>
+    <span>© 2026 Reelcut · A fork of <a href="https://github.com/OpenCut-app/opencut-classic" target="_blank" rel="noopener">OpenCut</a> · MIT license</span>
+    <nav aria-label="Footer">
+      <a href="https://github.com/percyitchy/reelcut" target="_blank" rel="noopener">Source code</a>
+      <a href="https://x.com/zodchiii" target="_blank" rel="noopener">Made by @zodchiii</a>
+    </nav>
+  </div></div>
+</footer>
+
+<script>
+(() => {
+  const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- email gate ---------- */
+  const API = "/api/subscribe", KEY = "reelcut_access_v2";
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const read = () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch { return null; } };
+  const save = v => { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch {} };
+  const esc = s => s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const unlock = (gate, d) => {
+    gate.innerHTML = d.editorUrl
+      ? `<div class="unlocked"><div class="who"><strong>You're in. The editor is ready.</strong><small>Access saved for ${esc(d.email)}</small></div><a class="capsule" href="${esc(d.editorUrl)}">Open the editor <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 7h8M7.5 3.5 11 7l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a></div>`
+      : `<div class="unlocked"><div class="who"><strong>You're on the early access list.</strong><small>We'll send your access link to ${esc(d.email)} as soon as the editor opens.</small></div></div>`;
+  };
+  const gates = [...document.querySelectorAll("[data-gate]")];
+  const saved = read(); if (saved && saved.email) gates.forEach(g => unlock(g, saved));
+  // the server is the source of truth: the access cookie is HttpOnly
+  fetch(API, { headers: { Accept: "application/json" }, cache: "no-store" })
+    .then(r => r.ok ? r.json() : null)
+    .then(j => {
+      if (!j) return;
+      if (j.access && j.email) { const d = { email: j.email, editorUrl: j.editorUrl }; save(d); gates.forEach(g => unlock(g, d)); }
+      else if (saved && j.gate) { try { localStorage.removeItem(KEY); } catch {} location.reload(); }
+    })
+    .catch(() => {});
+  gates.forEach(gate => {
+    const form = gate.querySelector("[data-form]"); if (!form) return;
+    const msg = gate.querySelector(".msg");
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      const email = form.email.value.trim().toLowerCase();
+      msg.className = "msg"; msg.textContent = "";
+      if (!EMAIL_RE.test(email)) { msg.className = "msg err"; msg.textContent = "Enter a valid email, like you@email.com"; form.email.focus(); return; }
+      const btn = form.querySelector("button"), label = btn.textContent;
+      btn.disabled = true; btn.textContent = "Unlocking…";
+      let editorUrl = null;
+      try {
+        const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, company: form.company.value }) });
+        const j = await r.json().catch(() => ({}));
+        if (r.status === 400) { msg.className = "msg err"; msg.textContent = "That email doesn't look right. Check it and try again."; btn.disabled = false; btn.textContent = label; return; }
+        if (r.status === 429) { msg.className = "msg err"; msg.textContent = "Too many tries from this network. Wait a few minutes and try again."; btn.disabled = false; btn.textContent = label; return; }
+        if (!r.ok) throw new Error(j.error || "server");
+        editorUrl = j.editorUrl || null;
+      } catch (err) {
+        // the API exists only on the deployed site; previews still open access
+        if (location.protocol.startsWith("http") && !/claude|localhost|127\.0/.test(location.hostname)) {
+          msg.className = "msg err"; msg.textContent = "We couldn't save your email just now. Try again in a moment.";
+          btn.disabled = false; btn.textContent = label; return;
+        }
+      }
+      const d = { email, editorUrl }; save(d); gates.forEach(g => unlock(g, d));
+    });
+  });
+
+  /* ---------- mist shader: domain-warped fbm, 0.4x resolution, real elapsed time ---------- */
+  const cv = document.getElementById("mist");
+  const gl = cv.getContext("webgl", { antialias: false, premultipliedAlpha: false, preserveDrawingBuffer: false });
+  if (gl) {
+    const vs = "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
+    const fs = `precision mediump float;uniform vec2 r;uniform float t;
+float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return v;}
+void main(){vec2 uv=gl_FragCoord.xy/r;vec2 p=uv*vec2(r.x/r.y,1.)*1.5;float s=t*.035;
+vec2 q=vec2(fbm(p+vec2(0.,s)),fbm(p+vec2(5.2,1.3)-s));
+vec2 w=vec2(fbm(p+3.2*q+vec2(1.7,9.2)+s*1.4),fbm(p+3.2*q+vec2(8.3,2.8)-s));
+float f=fbm(p+3.*w);
+vec3 base=vec3(.953,.961,.98);
+vec3 blue=vec3(.78,.84,1.),pink=vec3(1.,.85,.91),mint=vec3(.82,.96,.92),peach=vec3(1.,.92,.82),lav=vec3(.88,.85,1.);
+vec3 c=mix(blue,lav,smoothstep(.25,.75,q.x));c=mix(c,pink,smoothstep(.45,.9,w.y)*.8);c=mix(c,mint,smoothstep(.5,.95,q.y)*.55);c=mix(c,peach,smoothstep(.6,1.,f)*.5);
+float a=.55+.4*smoothstep(.2,.9,f);a*=mix(1.,.7,smoothstep(.6,1.,uv.y));
+gl_FragColor=vec4(mix(base,c,a),1.);}`;
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+    const pr = gl.createProgram(); gl.attachShader(pr, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(pr);
+    if (gl.getProgramParameter(pr, gl.LINK_STATUS)) {
+      gl.useProgram(pr);
+      const b = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, b);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      const loc = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+      const uR = gl.getUniformLocation(pr, "r"), uT = gl.getUniformLocation(pr, "t");
+      const SCALE = 0.4;
+      const size = () => { cv.width = Math.max(2, Math.round(innerWidth * SCALE)); cv.height = Math.max(2, Math.round(innerHeight * SCALE)); gl.viewport(0, 0, cv.width, cv.height); gl.uniform2f(uR, cv.width, cv.height); };
+      size(); addEventListener("resize", size);
+      const t0 = performance.now(); let raf = 0;
+      const draw = now => { gl.uniform1f(uT, (now - t0) / 1000 + 40); gl.drawArrays(gl.TRIANGLES, 0, 3); if (!REDUCE) raf = requestAnimationFrame(draw); };
+      raf = requestAnimationFrame(draw);
+      document.addEventListener("visibilitychange", () => { cancelAnimationFrame(raf); if (!document.hidden && !REDUCE) raf = requestAnimationFrame(draw); });
+    }
+  }
+
+  /* ---------- hero editor ---------- */
+  const DUR = 8;
+  const ruler = document.getElementById("ruler");
+  for (let s = 0; s <= DUR; s += 2) { const el = document.createElement("span"); el.style.left = (s / DUR * 100) + "%"; el.textContent = "00:0" + s; if (s === DUR) el.style.transform = "translateX(-110%)"; ruler.appendChild(el); }
+  const wave = document.getElementById("wave");
+  let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  for (let i = 0; i < 140; i++) { const b = document.createElement("i"); const env = .35 + .65 * Math.abs(Math.sin(i / 9)); b.style.height = Math.max(12, Math.round((.25 + rnd() * .75) * env * 100)) + "%"; wave.appendChild(b); }
+  const LINES = [
+    { s: .2, e: 2.6, w: [["this", .2], ["is", .55], ["the", .8], ["golden", 1.05], ["hour", 1.6]] },
+    { s: 2.8, e: 5.2, w: [["edited", 2.8], ["in", 3.35], ["a", 3.55], ["browser", 3.75], ["tab", 4.5]] },
+    { s: 5.4, e: 7.8, w: [["no", 5.4], ["app", 5.8], ["no", 6.3], ["watermark", 6.6]] },
+  ];
+  const laneT = document.getElementById("lane-t");
+  LINES.forEach(l => { const c = document.createElement("div"); c.className = "clip t"; c.style.left = (l.s / DUR * 100) + "%"; c.style.width = ((l.e - l.s) / DUR * 100) + "%"; c.textContent = l.w.map(x => x[0]).join(" "); laneT.appendChild(c); });
+  const cap = document.getElementById("cap"), tc = document.getElementById("tc"), ph = document.getElementById("ph"), tracks = document.getElementById("tracks");
+  let last = -1;
+  const highlight = (el, line, t) => { const ws = line.w; for (let i = 0; i < ws.length; i++) { const nx = i + 1 < ws.length ? ws[i + 1][1] : line.e; el.children[i].classList.toggle("on", t >= ws[i][1] && t < nx); } };
+  function heroFrame(t) {
+    const li = LINES.findIndex(l => t >= l.s && t < l.e);
+    if (li !== last) { cap.innerHTML = li < 0 ? "" : LINES[li].w.map(([w]) => `<span>${w}</span>`).join(" "); last = li; }
+    if (li >= 0) highlight(cap, LINES[li], t);
+    const lane = laneT.getBoundingClientRect(), box = tracks.getBoundingClientRect();
+    ph.style.left = (lane.left - box.left + lane.width * (t / DUR) - 1) + "px";
+    tc.innerHTML = `00:00:0${Math.floor(t)}<small>:${String(Math.floor((t % 1) * 30)).padStart(2, "0")}</small>`;
+  }
+
+  /* ---------- captions card ---------- */
+  const CD = [
+    { s: 0, e: 2.2, w: [["POV:", 0], ["you", .45], ["found", .8], ["a", 1.2], ["free", 1.4], ["editor", 1.75]] },
+    { s: 2.4, e: 4.6, w: [["that", 2.4], ["captions", 2.75], ["your", 3.35], ["video", 3.7], ["for", 4.1], ["you", 4.3]] },
+  ];
+  const capdemo = document.getElementById("capdemo"); let lastCD = -1;
+  function capFrame(t) {
+    t = t % 4.8;
+    const li = CD.findIndex(l => t >= l.s && t < l.e);
+    if (li !== lastCD) { capdemo.innerHTML = li < 0 ? "&nbsp;" : CD[li].w.map(([w]) => `<span>${w}</span>`).join(" "); lastCD = li; }
+    if (li >= 0) highlight(capdemo, CD[li], t);
+  }
+
+  /* ---------- aspect morph + liquid slider ---------- */
+  const SIZES = [["9:16", 70, 124], ["1:1", 112, 112], ["4:3", 136, 102], ["16:9", 168, 94]];
+  const abox = document.getElementById("abox"), blob = document.getElementById("blob"), sl = document.querySelectorAll("#slider span");
+  let ai = 0;
+  const setAspect = i => { const [lab, w, h] = SIZES[i]; abox.style.width = w + "px"; abox.style.height = h + "px"; abox.textContent = lab; blob.style.left = `calc(${i * 25}% + 3px)`; sl.forEach((s, k) => s.classList.toggle("on", k === i)); };
+  setAspect(0);
+
+  /* ---------- sound bars ---------- */
+  const bars = document.getElementById("bars");
+  for (let i = 0; i < 28; i++) { const b = document.createElement("i"); b.style.height = (30 + 70 * Math.abs(Math.sin(i * .7) * Math.cos(i * .23))) + "%"; b.style.animationDelay = (-(i * 97) % 1200) + "ms"; b.style.animationDuration = (900 + (i * 53) % 700) + "ms"; bars.appendChild(b); }
+
+  /* ---------- privacy particles stay inside the device ---------- */
+  const pc = document.getElementById("particles"), px = pc.getContext("2d");
+  const P = Array.from({ length: 34 }, (_, i) => ({ x: rnd(), y: rnd(), vx: (rnd() - .5) * .08, vy: (rnd() - .5) * .08, r: 1.5 + rnd() * 3, c: ["#7A5CFF", "#2B4DFF", "#EC4C86", "#14B394"][i % 4] }));
+  const sizePC = () => { const r = pc.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); pc.width = Math.max(1, r.width * d); pc.height = Math.max(1, r.height * d); px.setTransform(d, 0, 0, d, 0, 0); };
+  sizePC(); addEventListener("resize", sizePC);
+  function partFrame(dt) {
+    const w = pc.clientWidth, h = pc.clientHeight; px.clearRect(0, 0, w, h);
+    for (const p of P) {
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.x < .02 || p.x > .98) p.vx *= -1; if (p.y < .04 || p.y > .96) p.vy *= -1;
+      px.globalAlpha = .55; px.fillStyle = p.c; px.beginPath(); px.arc(p.x * w, p.y * h, p.r, 0, 6.283); px.fill();
+    }
+    px.globalAlpha = 1;
+  }
+
+  /* ---------- export progress ---------- */
+  const fill = document.getElementById("fill"), pct = document.getElementById("pct");
+  function expFrame(t) { const c = t % 6.5; const v = c < 5 ? 1 - Math.pow(1 - c / 5, 2.2) : 1; const n = Math.round(v * 100); fill.style.width = n + "%"; pct.textContent = n === 100 ? "Done" : n + "%"; }
+
+  /* ---------- one loop, real elapsed time ---------- */
+  if (REDUCE) { heroFrame(1.2); capFrame(1.5); partFrame(0); expFrame(10); addEventListener("resize", () => heroFrame(1.2)); return; }
+  let prev = performance.now(); const start = prev;
+  const loop = now => {
+    const dt = Math.max(0, Math.min(.05, (now - prev) / 1000)); prev = now; const t = Math.max(0, (now - start) / 1000);
+    heroFrame(t % DUR); capFrame(t); partFrame(dt); expFrame(t);
+    const k = Math.floor(t / 2.4) % SIZES.length; if (k !== ai) { ai = k; setAspect(ai); }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+})();
+</script>
+
+</body>
+</html>

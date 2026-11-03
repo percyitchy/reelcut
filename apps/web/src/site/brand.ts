@@ -1,13 +1,14 @@
-export const SITE_URL = "https://opencut.app";
+export const SITE_URL =
+	process.env.NEXT_PUBLIC_SITE_URL ?? "https://reelcut.vercel.app";
 
 export const SITE_INFO = {
-	title: "OpenCut",
+	title: "Reelcut",
 	description:
-		"A simple but powerful video editor that gets the job done. In your browser.",
+		"A free, open-source video editor that runs in your browser. Edit TikToks, Reels and Shorts with auto captions and no watermark.",
 	url: SITE_URL,
 	openGraphImage: "/open-graph/default.jpg",
 	twitterImage: "/open-graph/default.jpg",
 	favicon: "/favicon.ico",
 };
 
-export const DEFAULT_LOGO_URL = "/logos/opencut/svg/logo.svg";
+export const DEFAULT_LOGO_URL = "/logos/reelcut/logo.svg";

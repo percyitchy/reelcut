@@ -9,6 +9,14 @@ const nextConfig: NextConfig = {
 	reactStrictMode: true,
 	productionBrowserSourceMaps: true,
 	output: "standalone",
+	async rewrites() {
+		return {
+			// the marketing page is a static, self-contained HTML file
+			beforeFiles: [{ source: "/", destination: "/landing.html" }],
+			afterFiles: [],
+			fallback: [],
+		};
+	},
 	images: {
 		remotePatterns: [
 			{
@@ -18,10 +26,6 @@ const nextConfig: NextConfig = {
 			{
 				protocol: "https",
 				hostname: "images.unsplash.com",
-			},
-			{
-				protocol: "https",
-				hostname: "images.marblecms.com",
 			},
 			{
 				protocol: "https",
