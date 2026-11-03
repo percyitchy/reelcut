@@ -3,9 +3,9 @@ import { BasePage } from "@/app/base-page";
 import { SOCIAL_LINKS } from "@/site/social";
 
 export const metadata: Metadata = {
-	title: "Privacy Policy - Reelcut",
+	title: "Privacy Policy - Reeltab",
 	description:
-		"How Reelcut handles your data: your videos stay on your device, and we store only the email you give us.",
+		"How Reeltab handles your data: your videos stay on your device, and we store only the email you give us.",
 };
 
 const link = "text-primary hover:underline";
@@ -32,7 +32,7 @@ export default function PrivacyPage() {
 				<p>
 					When you enter your email to unlock the editor, we store it together
 					with the time you signed up. We use it to give you access and to tell
-					you about important updates to Reelcut. The list is kept in an Upstash
+					you about important updates to Reeltab. The list is kept in an Upstash
 					Redis database run for this site.
 				</p>
 				<p>
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
 				<h2 className="text-2xl font-semibold">Cookies and local storage</h2>
 				<ul className="list-disc space-y-2 pl-6">
 					<li>
-						<strong>reelcut_access</strong>: a cookie that remembers you entered
+						<strong>reeltab_access</strong>: a cookie that remembers you entered
 						your email, so the editor opens without asking again. It lasts one
 						year.
 					</li>
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
 			<section className="flex flex-col gap-3">
 				<h2 className="text-2xl font-semibold">Open source</h2>
 				<p>
-					Reelcut is a fork of{" "}
+					Reeltab is a fork of{" "}
 					<a href={SOCIAL_LINKS.upstream} target="_blank" rel="noopener noreferrer" className={link}>
 						OpenCut
 					</a>{" "}

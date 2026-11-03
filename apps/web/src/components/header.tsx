@@ -18,7 +18,7 @@ export function Header() {
 						width={26}
 						height={26}
 					/>
-					<span className="text-lg">Reelcut</span>
+					<span className="text-lg">Reeltab</span>
 				</Link>
 				<div className="flex items-center gap-2">
 					<Link

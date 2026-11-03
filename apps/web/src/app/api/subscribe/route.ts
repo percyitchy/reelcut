@@ -44,13 +44,13 @@ export async function POST(request: NextRequest) {
 	if (!email) return NextResponse.json({ error: "invalid_email" }, { status: 400 });
 
 	const ip = (request.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
-	const rlKey = `reelcut:rl:${ip}`;
+	const rlKey = `reeltab:rl:${ip}`;
 
 	try {
 		const pipe = redis.pipeline();
 		pipe.incr(rlKey);
 		pipe.expire(rlKey, 3600, "NX");
-		pipe.hsetnx("reelcut:emails", email, new Date().toISOString());
+		pipe.hsetnx("reeltab:emails", email, new Date().toISOString());
 		const [count] = (await pipe.exec()) as [number, number, number];
 		if (count > LIMIT_PER_HOUR) {
 			return NextResponse.json({ error: "too_many_requests" }, { status: 429 });

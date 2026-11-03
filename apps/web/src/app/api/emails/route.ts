@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 	if (!key || request.nextUrl.searchParams.get("key") !== key) {
 		return new NextResponse("Unauthorized", { status: 401 });
 	}
-	const all = ((await redis.hgetall<Record<string, string>>("reelcut:emails")) ?? {}) as Record<string, string>;
+	const all = ((await redis.hgetall<Record<string, string>>("reeltab:emails")) ?? {}) as Record<string, string>;
 	const rows = Object.entries(all).sort((a, b) => String(a[1]).localeCompare(String(b[1])));
 	const csv =
 		"email,signed_up_at\n" +
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 	return new NextResponse(csv, {
 		headers: {
 			"Content-Type": "text/csv; charset=utf-8",
-			"Content-Disposition": 'attachment; filename="reelcut-emails.csv"',
+			"Content-Disposition": 'attachment; filename="reeltab-emails.csv"',
 			"Cache-Control": "no-store",
 		},
 	});

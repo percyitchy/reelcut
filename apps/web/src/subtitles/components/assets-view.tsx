@@ -13,6 +13,11 @@ import { useEditor } from "@/editor/use-editor";
 import { TRANSCRIPTION_DIAGNOSTICS_SCOPE } from "@/transcription/diagnostics";
 import { DEFAULT_TRANSCRIPTION_SAMPLE_RATE } from "@/transcription/audio";
 import { TRANSCRIPTION_LANGUAGES } from "@/transcription/supported-languages";
+import {
+	CAPTION_QUALITY_OPTIONS,
+	DEFAULT_TRANSCRIPTION_MODEL,
+} from "@/transcription/models";
+import type { TranscriptionModelId } from "@/transcription/types";
 import type {
 	CaptionChunk,
 	TranscriptionLanguage,
@@ -86,6 +91,9 @@ function processingReducer(
 export function Captions() {
 	const [selectedLanguage, setSelectedLanguage] =
 		useState<TranscriptionLanguage>("auto");
+	const [selectedModel, setSelectedModel] = useState<TranscriptionModelId>(
+		DEFAULT_TRANSCRIPTION_MODEL,
+	);
 	const [processing, dispatch] = useReducer(processingReducer, IDLE_STATE);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -101,7 +109,7 @@ export function Captions() {
 		if (progress.status === "loading-model") {
 			dispatch({
 				type: "update_step",
-				step: `Loading model ${Math.round(progress.progress)}%`,
+				step: `Downloading model ${Math.round(progress.progress)}% (first time only)`,
 			});
 		} else if (progress.status === "transcribing") {
 			dispatch({ type: "update_step", step: "Transcribing..." });
@@ -135,6 +143,7 @@ export function Captions() {
 			const result = await transcriptionService.transcribe({
 				audioData: samples,
 				language: selectedLanguage === "auto" ? undefined : selectedLanguage,
+				modelId: selectedModel,
 				onProgress: handleProgress,
 			});
 
@@ -307,7 +316,31 @@ export function Captions() {
 								</SelectContent>
 							</Select>
 						</SectionField>
+						<SectionField label="Speed">
+							<Select
+								value={selectedModel}
+								onValueChange={(value) =>
+									setSelectedModel(value as TranscriptionModelId)
+								}
+								disabled={isProcessing}
+							>
+								<SelectTrigger>
+									<SelectValue placeholder="Select speed" />
+								</SelectTrigger>
+								<SelectContent>
+									{CAPTION_QUALITY_OPTIONS.map((option) => (
+										<SelectItem key={option.id} value={option.id}>
+											{option.label} · {option.size}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</SectionField>
 					</SectionFields>
+					<p className="text-muted-foreground text-xs leading-relaxed">
+						The model downloads once and is cached in your browser. Picking the
+						language instead of Auto detect is a little faster.
+					</p>
 
 					<Button
 						type="button"

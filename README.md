@@ -1,10 +1,10 @@
-# Reelcut
+# Reeltab
 
 A free, open-source video editor that runs in your browser. Edit any video, from lectures and tutorials to YouTube and TikTok, with a multi-track timeline, on-device auto subtitles and presets for every format. There is nothing to install, no watermark on export, and your footage stays on your device.
 
-![Reelcut](apps/web/public/open-graph/default.jpg)
+![Reeltab](apps/web/public/open-graph/default.jpg)
 
-Reelcut is a redesigned fork of [OpenCut](https://github.com/OpenCut-app/opencut-classic), released under the same MIT license. Credit for the editor engine goes to the OpenCut team.
+Reeltab is a redesigned fork of [OpenCut](https://github.com/OpenCut-app/opencut-classic), released under the same MIT license. Credit for the editor engine goes to the OpenCut team.
 
 ## Features
 
@@ -20,8 +20,8 @@ Reelcut is a redesigned fork of [OpenCut](https://github.com/OpenCut-app/opencut
 ## How the email gate works
 
 1. The landing page (`apps/web/public/landing.html`, served at `/`) posts the email to `POST /api/subscribe`.
-2. The email is stored in Upstash Redis in the hash `reelcut:emails` with the signup time.
-3. The response sets an HttpOnly cookie `reelcut_access`, signed with HMAC-SHA256 using `ACCESS_SECRET`.
+2. The email is stored in Upstash Redis in the hash `reeltab:emails` with the signup time.
+3. The response sets an HttpOnly cookie `reeltab_access`, signed with HMAC-SHA256 using `ACCESS_SECRET`.
 4. `apps/web/src/proxy.ts` checks that cookie on `/projects` and `/editor/*` and sends visitors without it back to the form.
 5. `GET /api/emails?key=ADMIN_KEY` downloads every signup as CSV.
 

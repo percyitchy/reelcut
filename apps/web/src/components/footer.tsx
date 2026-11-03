@@ -14,7 +14,7 @@ export function Footer() {
 		<footer className="bg-background border-t">
 			<div className="text-muted-foreground mx-auto flex max-w-6xl flex-col gap-4 px-6 py-8 text-sm md:flex-row md:items-center md:justify-between">
 				<span>
-					© {new Date().getFullYear()} Reelcut · A fork of{" "}
+					© {new Date().getFullYear()} Reeltab · A fork of{" "}
 					<Link
 						href={SOCIAL_LINKS.upstream}
 						target="_blank"

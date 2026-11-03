@@ -12,6 +12,6 @@ export async function submitFeedback({
 	message,
 }: SubmitFeedbackInput): Promise<FeedbackEntry> {
 	const entry = { id: generateUUID(), message, createdAt: new Date().toISOString() };
-	await redis.lpush("reelcut:feedback", JSON.stringify(entry));
+	await redis.lpush("reeltab:feedback", JSON.stringify(entry));
 	return entry;
 }

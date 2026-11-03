@@ -28,13 +28,13 @@ export function Onboarding() {
 	const getStepTitle = () => {
 		switch (step) {
 			case 0:
-				return "Welcome to Reelcut";
+				return "Welcome to Reeltab";
 			case 1:
 				return "Your files stay on your device";
 			case 2:
 				return "Start with a vertical project";
 			default:
-				return "Reelcut onboarding";
+				return "Reeltab onboarding";
 		}
 	};
 
@@ -44,8 +44,8 @@ export function Onboarding() {
 				return (
 					<div className="space-y-5">
 						<div className="space-y-3">
-							<Title title="Welcome to Reelcut" />
-							<Description description="A free, open-source video editor that runs right in your browser. Reelcut is built on OpenCut." />
+							<Title title="Welcome to Reeltab" />
+							<Description description="A free, open-source video editor that runs right in your browser. Reeltab is built on OpenCut." />
 						</div>
 						<NextButton onClick={handleNext}>Next</NextButton>
 					</div>

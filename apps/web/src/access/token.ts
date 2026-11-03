@@ -1,7 +1,7 @@
 // Signed access token for the email gate: base64url(email) + "." + HMAC-SHA256.
 // Uses Web Crypto so the same code runs in route handlers and in the proxy.
 
-export const ACCESS_COOKIE = "reelcut_access";
+export const ACCESS_COOKIE = "reeltab_access";
 export const ACCESS_MAX_AGE = 60 * 60 * 24 * 365;
 
 const enc = new TextEncoder();

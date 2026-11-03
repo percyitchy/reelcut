@@ -26,7 +26,7 @@ export function StoragePersistenceDialog() {
 						runs low.
 					</p>
 					<p className="text-base text-muted-foreground">
-						Allow Reelcut to protect them?
+						Allow Reeltab to protect them?
 					</p>
 				</DialogBody>
 				<DialogFooter>
