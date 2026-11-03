@@ -145,6 +145,8 @@ export function drawMeasuredTextLayout({
 	background,
 	backgroundColor,
 	textBaseline = "middle",
+	stroke = null,
+	shadow = null,
 }: {
 	ctx: TextCanvasContext;
 	layout: MeasuredTextLayout;
@@ -152,6 +154,8 @@ export function drawMeasuredTextLayout({
 	background?: ResolvedTextBackgroundLike | null;
 	backgroundColor?: string;
 	textBaseline?: CanvasTextBaseline;
+	stroke?: { widthPx: number; color: string } | null;
+	shadow?: { color: string; blurPx: number; offsetYPx: number } | null;
 }): void {
 	ctx.font = layout.fontString;
 	ctx.textAlign = layout.textAlign;
@@ -197,9 +201,31 @@ export function drawMeasuredTextLayout({
 		}
 	}
 
+	if (stroke && stroke.widthPx > 0) {
+		ctx.strokeStyle = stroke.color;
+		// the fill covers the inner half of the line, so double it
+		ctx.lineWidth = stroke.widthPx * 2;
+		ctx.lineJoin = "round";
+		ctx.miterLimit = 2;
+	}
+
 	for (let index = 0; index < layout.lines.length; index++) {
 		const lineY = index * layout.lineHeightPx - layout.block.visualCenterOffset;
-		ctx.fillText(layout.lines[index], 0, lineY);
+		const line = layout.lines[index];
+		if (shadow) {
+			ctx.save();
+			ctx.shadowColor = shadow.color;
+			ctx.shadowBlur = shadow.blurPx;
+			ctx.shadowOffsetX = 0;
+			ctx.shadowOffsetY = shadow.offsetYPx;
+			if (stroke && stroke.widthPx > 0) ctx.strokeText(line, 0, lineY);
+			else ctx.fillText(line, 0, lineY);
+			ctx.restore();
+		}
+		if (stroke && stroke.widthPx > 0) {
+			ctx.strokeText(line, 0, lineY);
+		}
+		ctx.fillText(line, 0, lineY);
 		drawTextDecoration({
 			ctx,
 			textDecoration: layout.textDecoration,

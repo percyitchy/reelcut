@@ -21,6 +21,8 @@ export interface ResolvedTextNodeState {
 	backgroundColor: string;
 	effectPasses: EffectPass[][];
 	measuredText: MeasuredTextElement;
+	stroke: { widthPx: number; color: string } | null;
+	shadow: { color: string; blurPx: number; offsetYPx: number } | null;
 }
 
 export class TextNode extends BaseNode<TextNodeParams, ResolvedTextNodeState> {}
@@ -55,6 +57,8 @@ export function renderTextToContext({
 		background: resolved.measuredText.resolvedBackground,
 		backgroundColor: resolved.backgroundColor,
 		textBaseline: baseline,
+		stroke: resolved.stroke,
+		shadow: resolved.shadow,
 	});
 
 	ctx.restore();

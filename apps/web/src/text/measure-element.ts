@@ -129,16 +129,70 @@ export function measureTextElement({
 	};
 }
 
+export function applyTextTransform({
+	content,
+	transform,
+}: {
+	content: string;
+	transform: unknown;
+}): string {
+	return transform === "uppercase" ? content.toLocaleUpperCase() : content;
+}
+
+export interface TextStrokeStyle {
+	/** outline thickness in pixels (visible part, outside the glyphs) */
+	widthPx: number;
+	color: string;
+}
+
+export interface TextShadowStyle {
+	color: string;
+	blurPx: number;
+	offsetYPx: number;
+}
+
+/** Outline and shadow sizes are stored as a percent of the rendered font size. */
+export function buildTextEffectsFromElement({
+	element,
+	scaledFontSize,
+}: {
+	element: TextElement;
+	scaledFontSize: number;
+}): { stroke: TextStrokeStyle | null; shadow: TextShadowStyle | null } {
+	const strokeWidth = readNumberParam({ params: element.params, key: "stroke.width", fallback: 0 });
+	const shadowBlur = readNumberParam({ params: element.params, key: "shadow.blur", fallback: 0 });
+	const shadowOffsetY = readNumberParam({ params: element.params, key: "shadow.offsetY", fallback: 0 });
+	const stroke =
+		strokeWidth > 0
+			? {
+					widthPx: (scaledFontSize * strokeWidth) / 100,
+					color: readStringParam({ params: element.params, key: "stroke.color", fallback: "#000000" }),
+				}
+			: null;
+	const shadow =
+		shadowBlur > 0 || shadowOffsetY !== 0
+			? {
+					color: readStringParam({ params: element.params, key: "shadow.color", fallback: "#000000" }),
+					blurPx: (scaledFontSize * shadowBlur) / 100,
+					offsetYPx: (scaledFontSize * shadowOffsetY) / 100,
+				}
+			: null;
+	return { stroke, shadow };
+}
+
 export function buildTextLayoutParamsFromElement({
 	element,
 }: {
 	element: TextElement;
 }): TextLayoutParams {
 	return {
-		content: readStringParam({
-			params: element.params,
-			key: "content",
-			fallback: "Default text",
+		content: applyTextTransform({
+			content: readStringParam({
+				params: element.params,
+				key: "content",
+				fallback: "Default text",
+			}),
+			transform: element.params.textTransform,
 		}),
 		fontSize: readNumberParam({
 			params: element.params,

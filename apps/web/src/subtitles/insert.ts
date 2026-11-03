@@ -6,13 +6,16 @@ import {
 } from "@/commands";
 import { buildSubtitleTextElement } from "./build-subtitle-text-element";
 import type { SubtitleCue } from "./types";
+import type { CaptionPreset } from "./presets";
 
 export function insertCaptionChunksAsTextTrack({
 	editor,
 	captions,
+	preset,
 }: {
 	editor: EditorCore;
 	captions: SubtitleCue[];
+	preset?: CaptionPreset;
 }): string | null {
 	if (captions.length === 0) {
 		return null;
@@ -29,6 +32,7 @@ export function insertCaptionChunksAsTextTrack({
 					index,
 					caption,
 					canvasSize,
+					preset,
 				}),
 			}),
 	);

@@ -16,6 +16,7 @@ import {
 	buildTextBackgroundFromElement,
 	getTextMeasurementContext,
 	measureTextElement,
+	buildTextEffectsFromElement,
 } from "@/text/measure-element";
 import { resolveColorAtTime, resolveOpacityAtTime } from "@/animation/values";
 import { resolveTransformAtTime } from "@/rendering/animation-values";
@@ -332,6 +333,12 @@ function resolveTextNode({
 		elementDuration: node.params.duration,
 	});
 	const background = buildTextBackgroundFromElement({ element: node.params });
+	const measuredText = measureTextElement({
+		element: node.params,
+		canvasHeight: node.params.canvasHeight,
+		localTime,
+		ctx: getTextMeasurementContext(),
+	});
 
 	return {
 		transform: resolveTransformAtTime({
@@ -366,11 +373,10 @@ function resolveTextNode({
 			width: context.renderer.width,
 			height: context.renderer.height,
 		}),
-		measuredText: measureTextElement({
+		measuredText,
+		...buildTextEffectsFromElement({
 			element: node.params,
-			canvasHeight: node.params.canvasHeight,
-			localTime,
-			ctx: getTextMeasurementContext(),
+			scaledFontSize: measuredText.scaledFontSize,
 		}),
 	};
 }

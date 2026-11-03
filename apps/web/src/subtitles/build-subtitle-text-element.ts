@@ -15,6 +15,11 @@ import type {
 	TextFontWeight,
 } from "@/text/primitives";
 import type { SubtitleCue, SubtitleStyleOverrides } from "./types";
+import {
+	captionEffectParamsFromPreset,
+	captionStyleFromPreset,
+	type CaptionPreset,
+} from "./presets";
 
 const SUBTITLE_MAX_WIDTH_RATIO = 0.8;
 const SUBTITLE_BOTTOM_MARGIN_RATIO = 0.05;
@@ -46,11 +51,15 @@ function wrapSubtitleText({
 	ctx,
 	text,
 	maxWidth,
+	uppercase = false,
 }: {
 	ctx: CanvasRenderingContext2D;
 	text: string;
 	maxWidth: number;
+	uppercase?: boolean;
 }): string {
+	const measureText = (value: string) =>
+		uppercase ? value.toLocaleUpperCase() : value;
 	const normalized = text.trim().replace(/\r\n/g, "\n");
 	const paragraphs = normalized.split("\n");
 	const wrappedParagraphs: string[] = [];
@@ -68,7 +77,7 @@ function wrapSubtitleText({
 
 		for (let i = 1; i < words.length; i++) {
 			const nextLine = `${currentLine} ${words[i]}`;
-			if (measureLineWidth({ ctx, text: nextLine }) <= maxWidth) {
+			if (measureLineWidth({ ctx, text: measureText(nextLine) }) <= maxWidth) {
 				currentLine = nextLine;
 				continue;
 			}
@@ -92,8 +101,10 @@ function measureWrappedTextBlock({
 	background,
 	fontSize,
 	lineHeight,
+	uppercase = false,
 }: {
 	ctx: CanvasRenderingContext2D;
+	uppercase?: boolean;
 	content: string;
 	canvasHeight: number;
 	textAlign: TextAlign;
@@ -104,7 +115,9 @@ function measureWrappedTextBlock({
 	const scaledFontSize = fontSize * (canvasHeight / FONT_SIZE_SCALE_REFERENCE);
 	const lineHeightPx = lineHeight * scaledFontSize;
 	const lines = content.split("\n");
-	const lineMetrics = lines.map((line) => ctx.measureText(line));
+	const lineMetrics = lines.map((line) =>
+		ctx.measureText(uppercase ? line.toLocaleUpperCase() : line),
+	);
 
 	const block = measureTextBlock({
 		lineMetrics,
@@ -256,15 +269,19 @@ export function buildSubtitleTextElement({
 	index,
 	caption,
 	canvasSize,
+	preset,
 }: {
 	index: number;
 	caption: SubtitleCue;
 	canvasSize: { width: number; height: number };
+	/** a caption preset overrides the cue's own style */
+	preset?: CaptionPreset;
 }): CreateTextElement {
 	const ctx = createMeasurementContext();
 	const style = resolveSubtitleStyle({
-		style: caption.style,
+		style: preset ? captionStyleFromPreset({ preset, canvasSize }) : caption.style,
 	});
+	const uppercase = Boolean(preset?.uppercase);
 	const fontFamily = quoteFontFamily({
 		fontFamily: style.fontFamily,
 	});
@@ -289,6 +306,7 @@ export function buildSubtitleTextElement({
 			ctx,
 			text: caption.text,
 			maxWidth,
+			uppercase,
 		});
 		const measurement = measureWrappedTextBlock({
 			ctx,
@@ -298,6 +316,7 @@ export function buildSubtitleTextElement({
 			background: style.background,
 			fontSize: style.fontSize,
 			lineHeight: style.lineHeight,
+			uppercase,
 		});
 		positionX = resolvePositionX({
 			canvasWidth: canvasSize.width,
@@ -343,6 +362,7 @@ export function buildSubtitleTextElement({
 				style.background.offsetY ?? DEFAULTS.text.background.offsetY,
 			"transform.positionX": positionX,
 			"transform.positionY": positionY,
+			...(preset ? captionEffectParamsFromPreset({ preset }) : {}),
 		},
 	};
 }

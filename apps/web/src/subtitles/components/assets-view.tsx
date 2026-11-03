@@ -7,7 +7,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useReducer, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { extractTimelineAudio } from "@/media/mediabunny";
 import { useEditor } from "@/editor/use-editor";
 import { TRANSCRIPTION_DIAGNOSTICS_SCOPE } from "@/transcription/diagnostics";
@@ -27,6 +27,65 @@ import { transcriptionService } from "@/services/transcription/service";
 import { decodeAudioToFloat32 } from "@/media/audio";
 import { buildCaptionChunks } from "@/transcription/caption";
 import { insertCaptionChunksAsTextTrack } from "@/subtitles/insert";
+import { toast } from "sonner";
+import {
+	CAPTION_PRESETS,
+	DEFAULT_CAPTION_PRESET_ID,
+	getCaptionPreset,
+	type CaptionPreset,
+} from "@/subtitles/presets";
+import {
+	applyCaptionPreset,
+	findCaptionElements,
+	loadPresetFont,
+} from "@/subtitles/apply-preset";
+
+const PRESET_STORAGE_KEY = "reeltab:caption-preset";
+const PREVIEW_FONTS_HREF = `https://fonts.googleapis.com/css2?${[
+	...new Set(CAPTION_PRESETS.map((preset) => preset.fontFamily)),
+]
+	.filter((family) => family !== "Arial")
+	.map((family) => `family=${family.replace(/ /g, "+")}`)
+	.join("&")}&display=swap`;
+
+function readStoredPresetId(): string {
+	try {
+		return localStorage.getItem(PRESET_STORAGE_KEY) ?? DEFAULT_CAPTION_PRESET_ID;
+	} catch {
+		return DEFAULT_CAPTION_PRESET_ID;
+	}
+}
+
+function PresetPreview({ preset }: { preset: CaptionPreset }) {
+	const sizePx = 15;
+	const strokePx = preset.stroke ? (sizePx * preset.stroke.width) / 100 : 0;
+	const shadow = preset.shadow
+		? `0 ${(sizePx * preset.shadow.offsetY) / 100}px ${(sizePx * preset.shadow.blur) / 100}px ${preset.shadow.color}`
+		: undefined;
+	const label = preset.uppercase ? "YOUR CAPTION" : "Your caption";
+	return (
+		<span
+			style={{
+				fontFamily: `"${preset.fontFamily}", sans-serif`,
+				fontWeight: preset.fontWeight === "bold" ? 700 : 400,
+				fontStyle: preset.fontStyle ?? "normal",
+				fontSize: `${sizePx * (preset.fontFamily === "Press Start 2P" ? 0.6 : 1)}px`,
+				lineHeight: 1.15,
+				letterSpacing: `${(preset.letterSpacing ?? 0) / 4}px`,
+				color: preset.color,
+				WebkitTextStroke: strokePx ? `${strokePx * 2}px ${preset.stroke?.color}` : undefined,
+				paintOrder: "stroke fill",
+				textShadow: shadow,
+				background: preset.background?.color,
+				borderRadius: preset.background ? `${Math.min(preset.background.cornerRadius, 40) / 6}px` : undefined,
+				padding: preset.background ? "2px 7px" : undefined,
+				whiteSpace: "nowrap",
+			}}
+		>
+			{label}
+		</span>
+	);
+}
 import { parseSubtitleFile } from "@/subtitles/parse";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -94,7 +153,19 @@ export function Captions() {
 	const [selectedModel, setSelectedModel] = useState<TranscriptionModelId>(
 		DEFAULT_TRANSCRIPTION_MODEL,
 	);
+	const [presetId, setPresetId] = useState<string>(DEFAULT_CAPTION_PRESET_ID);
+	const [applyingPresetId, setApplyingPresetId] = useState<string | null>(null);
 	const [processing, dispatch] = useReducer(processingReducer, IDLE_STATE);
+
+	useEffect(() => {
+		setPresetId(readStoredPresetId());
+		if (document.querySelector(`link[data-caption-preview-fonts]`)) return;
+		const link = document.createElement("link");
+		link.rel = "stylesheet";
+		link.href = PREVIEW_FONTS_HREF;
+		link.dataset.captionPreviewFonts = "true";
+		document.head.appendChild(link);
+	}, []);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const editor = useEditor();
@@ -118,10 +189,16 @@ export function Captions() {
 
 	const insertCaptions = ({
 		captions,
+		withPreset = false,
 	}: {
 		captions: CaptionChunk[];
+		withPreset?: boolean;
 	}): boolean => {
-		const trackId = insertCaptionChunksAsTextTrack({ editor, captions });
+		const trackId = insertCaptionChunksAsTextTrack({
+			editor,
+			captions,
+			preset: withPreset ? getCaptionPreset(presetId) : undefined,
+		});
 		return trackId !== null;
 	};
 
@@ -149,8 +226,9 @@ export function Captions() {
 
 			dispatch({ type: "update_step", step: "Generating captions..." });
 			const captionChunks = buildCaptionChunks({ segments: result.segments });
+			await loadPresetFont({ preset: getCaptionPreset(presetId) });
 
-			if (!insertCaptions({ captions: captionChunks })) {
+			if (!insertCaptions({ captions: captionChunks, withPreset: true })) {
 				dispatch({ type: "fail", error: "No captions were generated" });
 				return;
 			}
@@ -165,6 +243,33 @@ export function Captions() {
 						? error.message
 						: "An unexpected error occurred",
 			});
+		}
+	};
+
+	const handlePickPreset = async (preset: CaptionPreset) => {
+		setPresetId(preset.id);
+		try {
+			localStorage.setItem(PRESET_STORAGE_KEY, preset.id);
+		} catch {}
+		if (findCaptionElements({ editor }).length === 0) {
+			toast.success(`${preset.name} selected`, {
+				description: "New captions will use this style.",
+			});
+			return;
+		}
+		setApplyingPresetId(preset.id);
+		try {
+			const count = await applyCaptionPreset({ editor, preset });
+			toast.success(`${preset.name} applied`, {
+				description: `Restyled ${count} caption${count === 1 ? "" : "s"}. Press Cmd+Z to undo.`,
+			});
+		} catch (error) {
+			console.error("Applying caption style failed:", error);
+			toast.error("Couldn't apply the style", {
+				description: error instanceof Error ? error.message : "Try again.",
+			});
+		} finally {
+			setApplyingPresetId(null);
 		}
 	};
 
@@ -341,6 +446,43 @@ export function Captions() {
 						The model downloads once and is cached in your browser. Picking the
 						language instead of Auto detect is a little faster.
 					</p>
+					<div className="flex flex-col gap-2">
+						<div className="flex items-baseline justify-between gap-2">
+							<span className="text-sm font-medium">Style</span>
+							<span className="text-muted-foreground text-xs">
+								Click a style to restyle every caption
+							</span>
+						</div>
+						<div className="grid grid-cols-2 gap-2">
+							{CAPTION_PRESETS.map((preset) => {
+								const selected = preset.id === presetId;
+								return (
+									<button
+										key={preset.id}
+										type="button"
+										onClick={() => void handlePickPreset(preset)}
+										disabled={applyingPresetId !== null}
+										aria-pressed={selected}
+										title={preset.name}
+										className={`group relative flex h-[72px] flex-col items-center justify-center gap-1 overflow-hidden rounded-md border text-left transition-colors ${
+											selected
+												? "border-primary ring-primary/40 ring-2"
+												: "border-border hover:border-foreground/40"
+										}`}
+										style={{
+											background:
+												"linear-gradient(160deg, #3a4a6b 0%, #6b4a7a 55%, #2a2a3a 100%)",
+										}}
+									>
+										<PresetPreview preset={preset} />
+										<span className="absolute bottom-1 left-1.5 text-[10px] font-medium text-white/80">
+											{applyingPresetId === preset.id ? "Applying…" : preset.name}
+										</span>
+									</button>
+								);
+							})}
+						</div>
+					</div>
 
 					<Button
 						type="button"

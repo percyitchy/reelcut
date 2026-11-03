@@ -52,6 +52,20 @@ function preloadChunkImages({ atlas }: { atlas: FontAtlas }): void {
 	}
 }
 
+function appendStylesheet(url: string): Promise<boolean> {
+	const link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.href = url;
+	document.head.appendChild(link);
+	return new Promise<boolean>((resolve) => {
+		link.addEventListener("load", () => resolve(true), { once: true });
+		link.addEventListener("error", () => {
+			link.remove();
+			resolve(false);
+		}, { once: true });
+	});
+}
+
 export async function loadFullFont({
 	family,
 	weights = [400, 700],
@@ -62,14 +76,14 @@ export async function loadFullFont({
 	if (fullLoaded.has(family)) return;
 
 	const url = `${GOOGLE_FONTS_CSS}?family=${encodeGoogleFontsFamily(family)}:wght@${weights.join(";")}&display=swap`;
-	const link = document.createElement("link");
-	link.rel = "stylesheet";
-	link.href = url;
-	document.head.appendChild(link);
-	await new Promise<void>((resolve) => {
-		link.addEventListener("load", () => resolve(), { once: true });
-		link.addEventListener("error", () => resolve(), { once: true });
-	});
+	const loaded = await appendStylesheet(url);
+	if (!loaded) {
+		// display fonts such as Anton ship a single weight, so Google rejects
+		// a request for 400 and 700 together. Ask for the family alone.
+		await appendStylesheet(
+			`${GOOGLE_FONTS_CSS}?family=${encodeGoogleFontsFamily(family)}&display=swap`,
+		);
+	}
 	await Promise.all(
 		weights.map((weight) =>
 			document.fonts.load(`${weight} 16px "${family.replace(/"/g, '\\"')}"`),
