@@ -7,7 +7,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useReducer, useRef, useState } from "react";
 import { extractTimelineAudio } from "@/media/mediabunny";
 import { useEditor } from "@/editor/use-editor";
 import { TRANSCRIPTION_DIAGNOSTICS_SCOPE } from "@/transcription/diagnostics";
@@ -27,15 +27,11 @@ import { transcriptionService } from "@/services/transcription/service";
 import { decodeAudioToFloat32 } from "@/media/audio";
 import { buildCaptionChunks } from "@/transcription/caption";
 import { insertCaptionChunksAsTextTrack } from "@/subtitles/insert";
-import { toast } from "sonner";
-import { CaptionStyleGrid } from "./caption-style-grid";
 import {
 	DEFAULT_CAPTION_PRESET_ID,
 	getCaptionPreset,
-	type CaptionPreset,
 } from "@/subtitles/presets";
 import {
-	applyCaptionPreset,
 	findCaptionElements,
 	loadPresetFont,
 } from "@/subtitles/apply-preset";
@@ -116,13 +112,9 @@ export function Captions() {
 	const [selectedModel, setSelectedModel] = useState<TranscriptionModelId>(
 		DEFAULT_TRANSCRIPTION_MODEL,
 	);
-	const [presetId, setPresetId] = useState<string>(DEFAULT_CAPTION_PRESET_ID);
-	const [applyingPresetId, setApplyingPresetId] = useState<string | null>(null);
+	const [presetId] = useState<string>(readStoredPresetId);
 	const [processing, dispatch] = useReducer(processingReducer, IDLE_STATE);
 
-	useEffect(() => {
-		setPresetId(readStoredPresetId());
-	}, []);
 	const containerRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const editor = useEditor();
@@ -156,6 +148,17 @@ export function Captions() {
 			captions,
 			preset: withPreset ? getCaptionPreset(presetId) : undefined,
 		});
+		if (trackId) {
+			// open the Styles tab on the right by selecting the first caption
+			const first = findCaptionElements({ editor }).find(
+				(caption) => caption.trackId === trackId,
+			);
+			if (first) {
+				editor.selection.setSelectedElements({
+					elements: [{ trackId, elementId: first.element.id }],
+				});
+			}
+		}
 		return trackId !== null;
 	};
 
@@ -200,33 +203,6 @@ export function Captions() {
 						? error.message
 						: "An unexpected error occurred",
 			});
-		}
-	};
-
-	const handlePickPreset = async (preset: CaptionPreset) => {
-		setPresetId(preset.id);
-		try {
-			localStorage.setItem(PRESET_STORAGE_KEY, preset.id);
-		} catch {}
-		if (findCaptionElements({ editor }).length === 0) {
-			toast.success(`${preset.name} selected`, {
-				description: "New captions will use this style.",
-			});
-			return;
-		}
-		setApplyingPresetId(preset.id);
-		try {
-			const count = await applyCaptionPreset({ editor, preset });
-			toast.success(`${preset.name} applied`, {
-				description: `Restyled ${count} caption${count === 1 ? "" : "s"}. Press Cmd+Z to undo.`,
-			});
-		} catch (error) {
-			console.error("Applying caption style failed:", error);
-			toast.error("Couldn't apply the style", {
-				description: error instanceof Error ? error.message : "Try again.",
-			});
-		} finally {
-			setApplyingPresetId(null);
 		}
 	};
 
@@ -381,9 +357,12 @@ export function Captions() {
 						<SectionField label="Speed">
 							<Select
 								value={selectedModel}
-								onValueChange={(value) =>
-									setSelectedModel(value as TranscriptionModelId)
-								}
+								onValueChange={(value) => {
+									const option = CAPTION_QUALITY_OPTIONS.find(
+										(item) => item.id === value,
+									);
+									if (option) setSelectedModel(option.id);
+								}}
 								disabled={isProcessing}
 							>
 								<SelectTrigger>
@@ -399,24 +378,14 @@ export function Captions() {
 							</Select>
 						</SectionField>
 					</SectionFields>
-					<div className="flex flex-col gap-2">
-						<div className="flex items-baseline justify-between gap-2">
-							<span className="text-sm font-medium">Style</span>
-							<span className="text-muted-foreground text-xs">
-								One click restyles every caption
-							</span>
-						</div>
-						<CaptionStyleGrid
-							selectedId={presetId}
-							busyId={applyingPresetId}
-							onPick={(preset) => void handlePickPreset(preset)}
-							columns={3}
-						/>
-					</div>
+					<p className="text-muted-foreground text-xs leading-relaxed">
+						After the captions appear, click any caption to pick a style on the
+						right. One click restyles all of them.
+					</p>
 
 					<Button
 						type="button"
-						className="mt-auto w-full"
+						className="w-full"
 						onClick={handleGenerateTranscript}
 						disabled={isProcessing || activeDiagnostics.length > 0}
 					>
