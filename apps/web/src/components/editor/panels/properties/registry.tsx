@@ -21,6 +21,7 @@ import {
 	MusicNote03Icon,
 	MagicWand05Icon,
 	DashboardSpeed02Icon,
+	PaintBoardIcon,
 } from "@hugeicons/core-free-icons";
 import { ElementParamsTab } from "./components/element-params-tab";
 import { ClipEffectsTab, StandaloneEffectTab } from "@/effects/components/effects-tab";
@@ -28,6 +29,7 @@ import { MasksTab } from "@/masks/components/masks-tab";
 import { SpeedTab } from "@/speed/components/speed-tab";
 import { GraphicTab } from "@/graphics/components/graphic-tab";
 import { OcShapesIcon } from "@/components/icons";
+import { TextStylesTab } from "@/subtitles/components/text-styles-tab";
 
 const TRANSFORM_PARAM_KEYS = [
 	"transform.positionX",
@@ -182,6 +184,19 @@ function buildClipEffectsTab({
 	};
 }
 
+function buildTextStylesTab({
+	element,
+}: {
+	element: TextElement;
+}): PropertiesTabDef {
+	return {
+		id: "styles",
+		label: "Styles",
+		icon: <HugeiconsIcon icon={PaintBoardIcon} size={16} />,
+		content: ({ trackId }) => <TextStylesTab element={element} trackId={trackId} />,
+	};
+}
+
 function buildTextTab({ element }: { element: TextElement }): PropertiesTabDef {
 	return {
 		id: "text",
@@ -232,11 +247,11 @@ function getTextConfig({
 	element: TextElement;
 }): ElementPropertiesConfig {
 	return {
-		defaultTab: "text",
+		defaultTab: "styles",
 		tabs: [
+			buildTextStylesTab({ element }),
 			buildTextTab({ element }),
 			buildTransformTab({ element }),
-			buildBlendingTab({ element }),
 		],
 	};
 }
