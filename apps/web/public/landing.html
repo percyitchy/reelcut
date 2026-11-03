@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Reelcut</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Reelcut is a free, open-source video editor that runs in your browser. Multi-track timeline, on-device auto captions, 9:16 presets, no watermark.">
+<meta name="description" content="Reelcut is a free, open-source video editor that runs in your browser. Edit any video, add auto subtitles on your device, export with no watermark.">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
 <link rel="apple-touch-icon" href="/icons/apple-icon-180x180.png">
 <link rel="manifest" href="/manifest.json">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Reelcut: edit TikToks, Reels and Shorts in your browser">
-<meta property="og:description" content="A free, open-source video editor with auto captions, 9:16 presets and no watermark. Your footage stays on your device.">
+<meta property="og:title" content="Reelcut: edit any video and add subtitles in your browser">
+<meta property="og:description" content="Lectures, tutorials, YouTube videos and TikToks. A free, open-source editor with auto subtitles and no watermark. Your footage stays on your device.">
 <meta property="og:image" content="/open-graph/default.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:creator" content="@zodchiii">
@@ -368,8 +368,8 @@ footer a { text-decoration: none; } footer a:hover { color: var(--ink); }
   <section class="hero">
     <div class="wrap">
       <a class="pill glass" href="https://github.com/percyitchy/reelcut" target="_blank" rel="noopener"><b>Open source</b>Free video editor that runs in your browser</a>
-      <h1>Edit TikToks, Reels and Shorts <span class="grad">right in your browser</span></h1>
-      <p class="lede">A full video editor with a multi-track timeline, auto captions and vertical presets. Nothing to install, no watermark on export, and your footage stays on your device.</p>
+      <h1>Edit any video and add subtitles, <span class="grad">right in your browser</span></h1>
+      <p class="lede">Lectures, tutorials, YouTube videos and TikToks. Cut, caption and export without installing anything, and your footage never leaves your device.</p>
 
       <div class="access" id="access">
         <div data-gate>
@@ -444,7 +444,7 @@ footer a { text-decoration: none; } footer a:hover { color: var(--ink); }
     <div class="wrap">
       <div class="head">
         <div class="eyebrow">Features</div>
-        <h2>Everything a short video needs, in one tab</h2>
+        <h2>Everything your video needs, in one tab</h2>
         <p>Cut your clips, caption them and export in the format each platform wants. The whole editor loads in the browser you already use.</p>
       </div>
 
@@ -461,11 +461,11 @@ footer a { text-decoration: none; } footer a:hover { color: var(--ink); }
 
         <article class="card c-ver">
           <div class="duo"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="5.5" y="1.5" width="9" height="17" rx="2.6" fill="#2B4DFF" opacity=".25"/><rect x="5.5" y="1.5" width="9" height="17" rx="2.6" fill="none" stroke="#2B4DFF" stroke-width="1.7"/></svg></div>
-          <h3>Vertical first</h3>
-          <p>Start in 9:16 for TikTok, Reels and Shorts, then switch formats when you post elsewhere.</p>
+          <h3>Any format</h3>
+          <p>16:9 for YouTube and lectures, 9:16 for TikTok, Reels and Shorts, plus square and 4:3.</p>
           <div class="viz">
-            <div class="aspect"><div class="box" id="abox">9:16</div></div>
-            <div class="slider" id="slider"><div class="blob" id="blob"></div><span class="on">9:16</span><span>1:1</span><span>4:3</span><span>16:9</span></div>
+            <div class="aspect"><div class="box" id="abox">16:9</div></div>
+            <div class="slider" id="slider"><div class="blob" id="blob"></div><span class="on">16:9</span><span>9:16</span><span>1:1</span><span>4:3</span></div>
           </div>
         </article>
 
@@ -545,7 +545,7 @@ footer a { text-decoration: none; } footer a:hover { color: var(--ink); }
       </div>
       <div class="steps">
         <div class="step glass"><div class="n">1</div><h3>Enter your email</h3><p>Type your email to unlock the editor. Access is free and stays open on this device.</p></div>
-        <div class="step glass"><div class="n">2</div><h3>Open the editor</h3><p>Create a project and pick 9:16 for TikTok, Reels and Shorts, or any other canvas.</p></div>
+        <div class="step glass"><div class="n">2</div><h3>Open the editor</h3><p>Create a project and pick a format: 16:9 for YouTube and lectures, 9:16 for shorts.</p></div>
         <div class="step glass"><div class="n">3</div><h3>Drop in your footage</h3><p>Cut, caption and export. Your files load from your computer and stay there.</p></div>
       </div>
     </div>
@@ -558,6 +558,7 @@ footer a { text-decoration: none; } footer a:hover { color: var(--ink); }
         <details open><summary>Is Reelcut really free?</summary><p>Yes. The editor is free with no watermark and no export limits. It is open source under the MIT license, so the code will stay public.</p></details>
         <details><summary>Why do you ask for my email?</summary><p>Your email unlocks the editor and lets us tell you when new features ship. We don't sell it, and you can ask us to delete it at any time.</p></details>
         <details><summary>Do my videos get uploaded anywhere?</summary><p>No. Footage is loaded from your computer and kept in your browser's storage. Captions are generated on your device as well.</p></details>
+        <details><summary>Can I add subtitles to a long lecture?</summary><p>Yes. Import the recording, open Captions and pick a model. For long videos use the Small model in Chrome or Edge: everything runs on your computer, so an hour of audio takes a while to transcribe.</p></details>
         <details><summary>Which browser should I use?</summary><p>A recent version of Chrome, Edge, Arc or Brave works best. The largest caption model runs best with WebGPU, which these browsers support.</p></details>
         <details><summary>How is this related to OpenCut?</summary><p>Reelcut is a redesigned fork of OpenCut, an open-source video editor released under the MIT license. Credit for the editor engine goes to the OpenCut team.</p></details>
       </div>
@@ -726,7 +727,7 @@ gl_FragColor=vec4(mix(base,c,a),1.);}`;
   }
 
   /* ---------- aspect morph + liquid slider ---------- */
-  const SIZES = [["9:16", 70, 124], ["1:1", 112, 112], ["4:3", 136, 102], ["16:9", 168, 94]];
+  const SIZES = [["16:9", 168, 94], ["9:16", 70, 124], ["1:1", 112, 112], ["4:3", 136, 102]];
   const abox = document.getElementById("abox"), blob = document.getElementById("blob"), sl = document.querySelectorAll("#slider span");
   let ai = 0;
   const setAspect = i => { const [lab, w, h] = SIZES[i]; abox.style.width = w + "px"; abox.style.height = h + "px"; abox.textContent = lab; blob.style.left = `calc(${i * 25}% + 3px)`; sl.forEach((s, k) => s.classList.toggle("on", k === i)); };

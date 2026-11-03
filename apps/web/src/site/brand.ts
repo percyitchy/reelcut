@@ -4,7 +4,7 @@ export const SITE_URL =
 export const SITE_INFO = {
 	title: "Reelcut",
 	description:
-		"A free, open-source video editor that runs in your browser. Edit TikToks, Reels and Shorts with auto captions and no watermark.",
+		"A free, open-source video editor that runs in your browser. Edit any video and add auto subtitles, with no watermark.",
 	url: SITE_URL,
 	openGraphImage: "/open-graph/default.jpg",
 	twitterImage: "/open-graph/default.jpg",

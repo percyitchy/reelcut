@@ -1,6 +1,6 @@
 # Reelcut
 
-A free, open-source video editor that runs in your browser. Edit TikToks, Reels and Shorts with a multi-track timeline, on-device auto captions and 9:16 presets. There is nothing to install, no watermark on export, and your footage stays on your device.
+A free, open-source video editor that runs in your browser. Edit any video, from lectures and tutorials to YouTube and TikTok, with a multi-track timeline, on-device auto subtitles and presets for every format. There is nothing to install, no watermark on export, and your footage stays on your device.
 
 ![Reelcut](apps/web/public/open-graph/default.jpg)
 
